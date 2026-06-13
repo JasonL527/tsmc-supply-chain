@@ -1,0 +1,4 @@
+# Dev-only deps for the data-harvesting scripts in scripts/.
+# NOT needed to run the app (app.py reads the vendored CSVs in data/).
+# Setup:  pip install -r requirements-dev.txt && playwright install chromium
+playwright>=1.40

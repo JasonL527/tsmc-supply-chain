@@ -16,11 +16,17 @@
 
 ## 2. TSIA — Taiwan Semiconductor Industry Association member directory (`tsia/`)
 - **Source:** https://www.tsia.org.tw/MemberList?nodeID=26
-- **Coverage:** PARTIAL — page 1 of 10 (20 members). Pages 2–10 use ASP.NET
-  postback pagination (viewstate) and Chinese-only names; not yet harvested.
-- **`members.csv`:** original Chinese name preserved in `local_name`; English
-  mapping in `name` is best-effort (one entry, "Juhua IC", is an unverified
-  romanization — the Chinese original is authoritative).
+- **Coverage:** FULL — all **220 members** across 11 pages.
+- **How:** `scripts/scrape_tsia.py` drives a headless Chromium (Playwright)
+  through the site's ASP.NET `__doPostBack` pagination, capturing each member's
+  number, Traditional-Chinese name, and own website URL →
+  `tsia/members_scraped.csv`.
+- **English names:** `scripts/build_tsia_members.py` maps each member to an
+  English name + segment. 144 are **verified** (confirmed against the member's
+  website domain / well-known identity); 76 are **unverified**, rendered as a
+  domain-derived brand with a trailing `*`. The authoritative Traditional-Chinese
+  name is always in `local_name`, and `website` lets you confirm identity.
+- **Regenerate:** `python scripts/scrape_tsia.py && python scripts/build_tsia_members.py`
 
 ## 3. SEMI member directory — NOT INGESTED
 - **Source:** https://www.semi.org/en/resources/member-directory

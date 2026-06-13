@@ -544,7 +544,9 @@ def generate_dataset(seed: int = 42) -> pd.DataFrame:
 
 _SUFFIX_RE = re.compile(
     r"\b(corporation|corp|incorporated|inc|co|ltd|limited|llc|group|holding|holdings|"
-    r"company|plc|ag|nv|bv|sa|gmbh|kk|intl|international|taiwan|usa|america)\b"
+    r"company|plc|ag|nv|bv|sa|gmbh|kk|intl|international|taiwan|usa|america|"
+    r"technology|technologies|electronics|electronic|semiconductor|semiconductors|"
+    r"microelectronics|manufacturing|mfg|industrial|industries|industry)\b"
 )
 _KNOWN_FOUNDRIES = {"tsmc", "samsung", "umc", "smic", "globalfoundries", "powerchip",
                     "vanguard", "intel", "hua hong", "episil", "tower", "dbhitek"}
@@ -659,6 +661,8 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
     df["market_share_pct"] = np.nan
     df["geo_precision"] = "site"
     df["in_core_tree"] = True
+    df["name_verified"] = True
+    df["website"] = ""
 
     by_key = {normalize_name(n): i for i, n in zip(df.index, df["name"])}
     rng = random.Random(seed + 7)
@@ -711,7 +715,7 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
             data_source="ETO", local_name="", role=e["role"],
             market_share_pct=e["market_share_pct"],
             geo_precision=("country-approx" if geo else "ungeocoded"),
-            in_core_tree=False,
+            in_core_tree=False, name_verified=True, website="",
         ))
         by_key[key] = None  # reserve so later sources dedup against it
 
@@ -723,13 +727,14 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
     tsia_rows = []
     for _, t in tsia.iterrows():
         key = normalize_name(t["name"])
-        if key in by_key:
+        if key in by_key and by_key[key] is not None:
             enrich(by_key[key], "TSIA", local=str(t["local_name"]))
             continue
         geo = COUNTRY_GEO.get(t["country"], COUNTRY_GEO["TWN"])
         lat = geo[0] + rng.uniform(-0.25, 0.25)
         lon = geo[1] + rng.uniform(-0.25, 0.25)
         seg = str(t["segment"])
+        nv = t["name_verified"] in (True, "True")
         cowos, euv, upc = _flags_from_input(seg)
         ai = is_ai_input(seg) or "foundry" in seg.lower() or "memory" in seg.lower()
         rid = f"S-{len(tsia_rows) + 1:03d}"
@@ -744,6 +749,7 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
             phoenix_lat=np.nan, phoenix_lon=np.nan, ai_supply_chain=bool(ai),
             data_source="TSIA", local_name=str(t["local_name"]), role=seg,
             market_share_pct=np.nan, geo_precision="country-approx", in_core_tree=False,
+            name_verified=nv, website=str(t.get("website", "")),
         ))
         by_key[key] = None
 
@@ -1318,15 +1324,32 @@ with tab_engine:
 st.divider()
 
 # ── Dataset + Google Sheets export ──
-st.markdown("### 📡 TARGET DATABASE")
-st.caption(f"{len(df_f)} of {len(df)} companies match current filters. "
-           "Click any column header to sort.")
+hdr_l, hdr_r = st.columns([3, 1])
+with hdr_l:
+    st.markdown("### 📡 TARGET DATABASE")
+    n_star = int((~df_f["name_verified"]).sum())
+    st.caption(f"{len(df_f)} of {len(df)} companies match current filters · "
+               f"{n_star} name(s) marked * (unverified). Click any column header to sort.")
+with hdr_r:
+    with st.popover("ℹ️ About the * names", use_container_width=True):
+        st.markdown(
+            "**Names ending in `*` are unverified.** They are best-effort English "
+            "renderings auto-derived from the company's own web **domain** (captured "
+            "during the TSIA member-directory scrape) — not an official English name.\n\n"
+            "The **authoritative** name is always the Traditional-Chinese original in the "
+            "`local_name` column, and the `website` column lets you confirm identity "
+            "directly.\n\n"
+            "Verified names (no `*`) are confirmed against the company's website domain "
+            "or well-known identity. To see only confident records, sort or filter on the "
+            "`name_verified` column."
+        )
 
-EXPORT_COLS = ["company_id", "name", "local_name", "data_source", "tier", "category",
-               "role", "product", "city", "country", "geo_precision", "lat", "lon",
-               "supplies_to", "ai_supply_chain", "cowos", "euv", "upc", "market_share_pct",
-               "capital_intensity", "labor_intensity", "revenue_musd", "employees",
-               "tsmc_dependence_pct", "us_presence", "migration_score", "status"]
+EXPORT_COLS = ["company_id", "name", "name_verified", "local_name", "website",
+               "data_source", "tier", "category", "role", "product", "city", "country",
+               "geo_precision", "lat", "lon", "supplies_to", "ai_supply_chain",
+               "cowos", "euv", "upc", "market_share_pct", "capital_intensity",
+               "labor_intensity", "revenue_musd", "employees", "tsmc_dependence_pct",
+               "us_presence", "migration_score", "status"]
 df_view = df_f[EXPORT_COLS].sort_values("migration_score", ascending=False)
 
 st.dataframe(
@@ -1338,8 +1361,12 @@ st.dataframe(
         "migration_score": st.column_config.ProgressColumn(
             "US Migration Likelihood", min_value=0, max_value=100, format="%d"),
         "ai_supply_chain": st.column_config.CheckboxColumn("AI chain"),
+        "name_verified": st.column_config.CheckboxColumn(
+            "Name ✓", help="Unchecked = English name is an unverified * rendering "
+                           "(see the local_name / website columns)."),
         "data_source": st.column_config.TextColumn("Source"),
-        "local_name": st.column_config.TextColumn("Local name"),
+        "local_name": st.column_config.TextColumn("Local name (authoritative)"),
+        "website": st.column_config.LinkColumn("Website"),
         "market_share_pct": st.column_config.NumberColumn("ETO mkt share", format="%.1f%%"),
         "revenue_musd": st.column_config.NumberColumn("Revenue (M USD)", format="$%d M"),
         "tsmc_dependence_pct": st.column_config.NumberColumn("TSMC dep. %", format="%d%%"),
@@ -1374,9 +1401,11 @@ with st.expander("📚 DATA SOURCES & ATTRIBUTION — what's real vs. illustrati
   Source repo: `github.com/georgetown-cset/eto-chip-explorer`. Credit ETO/CSET
   when redistributing.
 - **TSIA** — Taiwan Semiconductor Industry Association member directory
-  (`tsia.org.tw`). **Partial: page 1 of 10** (20 members); pages 2–10 use
-  ASP.NET postback pagination + Chinese-only names, not yet harvested. Original
-  Chinese names preserved in the `local_name` column.
+  (`tsia.org.tw`). **Full directory: all 220 members** across 11 pages, scraped
+  via Playwright (`scripts/scrape_tsia.py`) by driving the site's ASP.NET
+  postback pagination. English names verified against each member's own website
+  domain where possible; **unverified renderings are marked with `*`** and the
+  authoritative Traditional-Chinese name is kept in `local_name`.
 - **SEMI member directory** — **not ingested.** `semi.org` returns HTTP 403
   (bot protection) and gates the directory behind member login.
 - **De-duplication** — external rows are matched to curated companies by a

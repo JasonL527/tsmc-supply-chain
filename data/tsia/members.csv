@@ -1,21 +1,221 @@
-local_name,name,country,segment
-力晶創新投資控股股份有限公司,Powerchip (PSMC Holding),TWN,Foundry / DRAM
-工業技術研究院,ITRI (Industrial Technology Research Institute),TWN,R&D Institute
-世界先進積體電路股份有限公司,Vanguard Intl Semiconductor (VIS),TWN,Foundry
-台灣光罩股份有限公司,Taiwan Mask Corp,TWN,Photomasks
-台灣積體電路製造股份有限公司,TSMC,TWN,Foundry (Anchor)
-台灣應用材料股份有限公司,Applied Materials (Taiwan),TWN,Equipment
-巨華積体電路股份有限公司,Juhua IC,TWN,IC
-矽成積體電路股份有限公司,ISSI (Integrated Silicon Solution),TWN,Memory
-南亞科技股份有限公司,Nanya Technology,TWN,DRAM
-科林研發股份有限公司,Lam Research (Taiwan R&D),TWN,Equipment
-美商科磊股份有限公司台灣分公司,KLA (Taiwan),TWN,Metrology / Inspection
-凌陽科技股份有限公司,Sunplus Technology,TWN,Fabless IC Design
-華邦電子股份有限公司,Winbond Electronics,TWN,Memory
-華泰電子股份有限公司,Walton Advanced Engineering,TWN,OSAT
-菱生精密工業股份有限公司,Lingsen Precision Industries,TWN,OSAT
-瑞昱半導體股份有限公司,Realtek Semiconductor,TWN,Fabless IC Design
-鈺創科技股份有限公司,Etron Technology,TWN,Memory / Fabless
-漢民科技股份有限公司,Hermes-Epitek,TWN,Equipment Distribution
-漢磊科技股份有限公司,Episil Technologies,TWN,Specialty Foundry
-聯華電子股份有限公司,UMC (United Microelectronics),TWN,Foundry
+﻿local_name,name,name_verified,country,segment,website,member_id
+力晶創新投資控股股份有限公司,Powerchip Investment Holding,True,TWN,Foundry / DRAM,http://www.powerchiptech.com/,0001
+工業技術研究院,ITRI (Industrial Technology Research Institute),True,TWN,R&D Institute,http://www.itri.org.tw,0005
+世界先進積體電路股份有限公司,Vanguard Intl Semiconductor (VIS),True,TWN,Foundry,http://www.vis.com.tw,0009
+台灣光罩股份有限公司,Taiwan Mask Corp,True,TWN,Photomask,https://www.tmcnet.com.tw/,0010
+台灣積體電路製造股份有限公司,TSMC,True,TWN,Foundry,http://www.tsmc.com,0013
+台灣應用材料股份有限公司,Applied Materials (Taiwan),True,TWN,Equipment,http://www.appliedmaterials.com,0014
+巨華積体電路股份有限公司,Aplusinc*,False,TWN,Unclassified,http://www.aplusinc.com.tw,0016
+矽成積體電路股份有限公司,ISSI (Integrated Silicon Solution),True,TWN,Memory / IC,http://www.issi.com,0024
+南亞科技股份有限公司,Nanya Technology,True,TWN,DRAM,https://www.nanya.com,0027
+科林研發股份有限公司,Lam Research (Taiwan),True,TWN,Equipment,https://taiwan.lamresearch.com/,0029
+美商科磊股份有限公司台灣分公司,KLA (Taiwan),True,TWN,Metrology / Inspection,http://www.kla.com,0031
+凌陽科技股份有限公司,Sunplus Technology,True,TWN,Fabless IC Design,https://w3.sunplus.com/,0032
+華邦電子股份有限公司,Winbond Electronics,True,TWN,Memory,https://www.winbond.com,0040
+華泰電子股份有限公司,OSE (Orient Semiconductor Electronics),True,TWN,OSAT / Test,https://www.ose.com.tw,0041
+菱生精密工業股份有限公司,Lingsen Precision Industries,True,TWN,OSAT / Test,https://www.lingsen.com.tw/,0044
+瑞昱半導體股份有限公司,Realtek Semiconductor,True,TWN,Fabless IC Design,http://www.realtek.com,0048
+鈺創科技股份有限公司,Etron Technology,True,TWN,Memory / Fabless,http://www.etron.com,0049
+漢民科技股份有限公司,Hermes-Epitek,True,TWN,Equipment Distribution,http://www.hermes.com.tw,0050
+漢磊科技股份有限公司,Episil Technologies,True,TWN,Specialty Foundry,https://www.episil.com,0051
+聯華電子股份有限公司,UMC,True,TWN,Foundry,http://www.umc.com,0055
+矽品精密工業股份有限公司,Siliconware Precision (SPIL),True,TWN,OSAT / Test,http://www.spil.com.tw,0062
+華東科技股份有限公司,Walton Advanced Engineering,True,TWN,OSAT / Test,https://www.walton.com.tw,0064
+創意電子股份有限公司,Global Unichip (GUC),True,TWN,ASIC Design,http://www.guc-asic.com%20,0081
+日月光半導體製造股份有限公司,ASE Group,True,TWN,OSAT / Test,http://www.aseglobal.com,0083
+微相科技股份有限公司,Mliusa*,False,TWN,Unclassified,https://www.mliusa.com,0096
+南茂科技股份有限公司,ChipMOS Technologies,True,TWN,OSAT / Test,https://www.chipmos.com,0101
+茂德科技股份有限公司,ProMOS Technologies,True,TWN,DRAM,http://www.promos.com.tw,0102
+台灣巴斯夫股份有限公司,BASF (Taiwan),True,TWN,Materials / Chemicals,http://www.basf.com,0104
+京元電子股份有限公司,KYEC (King Yuan Electronics),True,TWN,OSAT / Test,http://www.kyec.com.tw,0108
+凱鈺科技股份有限公司,Tmtech*,False,TWN,Semiconductor (unclassified),http://www.tmtech.com.tw,0111
+晶豪科技股份有限公司,ESMT (Elite Semiconductor),True,TWN,Memory / IC,http://www.esmt.com.tw,0119
+笙泉科技股份有限公司,Megawin Technology,True,TWN,Fabless IC Design,http://www.megawin.com.tw,0126
+聯傑國際股份有限公司,Davicom Semiconductor,True,TWN,Fabless IC Design,http://www.davicom.com.tw,0127
+環真科技股份有限公司,Truetest*,False,TWN,Unclassified,http://www.truetest.com.tw,0134
+帆宣系統科技股份有限公司,Marketech International (MIC),True,TWN,Facility / Equipment,https://www.micb2b.com/,0146
+蔚華科技股份有限公司,Spirox,True,TWN,Test / Equipment,http://www.spirox.com.tw,0151
+聯發科技股份有限公司,MediaTek,True,TWN,Fabless IC Design,http://www.mediatek.com,0159
+智成電子股份有限公司,Syntronix*,False,TWN,Unclassified,http://www.syntronix.com.tw,0161
+奇景光電股份有限公司,Himax Technologies,True,TWN,Fabless IC Design,http://www.himax.com.tw,0163
+立錡科技股份有限公司,Richtek Technology,True,TWN,Fabless IC Design,http://www.richtek.com,0165
+力旺電子股份有限公司,eMemory Technology,True,TWN,IP / Fabless,http://www.ememory.com.tw,0167
+宜特科技股份有限公司,iST (Integrated Service Technology),True,TWN,Test / Reliability,http://www.istgroup.com,0174
+力成科技股份有限公司,Powertech Technology (PTI),True,TWN,OSAT / Test,https://www.pti.com.tw/,0175
+世芯電子股份有限公司,Alchip Technologies,True,TWN,ASIC Design,http://www.alchip.com,0183
+力晶積成電子製造股份有限公司,Powerchip Semiconductor Mfg (PSMC),True,TWN,Foundry,https://www.powerchip.com/,0184
+群聯電子股份有限公司,Phison Electronics,True,TWN,Fabless IC Design,http://www.phison.com/,0185
+穩懋半導體股份有限公司,WIN Semiconductors,True,TWN,GaAs Foundry,https://www.winfoundry.com/,0193
+環球晶圓股份有限公司,GlobalWafers,True,TWN,Silicon Wafers,https://www.sas-globalwafers.com/,0197
+上銀科技股份有限公司,HIWIN Technologies,True,TWN,Precision / Automation,http://www.hiwin.tw/,0198
+馗鼎奈米科技股份有限公司,Creating Nanotech*,False,TWN,Semiconductor (unclassified),http://www.creating-nanotech.com,0202
+欣銓科技股份有限公司,Ardentec,True,TWN,OSAT / Test,http://www.ardentec.com,0205
+矽格股份有限公司,Sigurd Microelectronics,True,TWN,OSAT / Test,https://www.sigurd.com.tw,0206
+大聯大控股股份有限公司,WPG Holdings,True,TWN,Distribution,http://www.WPGholdings.com,0207
+億力鑫系統科技股份有限公司,Els Tech*,False,TWN,Semiconductor (unclassified),http://www.els-tech.com.tw/tw/company/profile/info/1,0210
+嘉晶電子股份有限公司,Episil-Precision (Epitech),True,TWN,Epitaxial Wafers,http://www.epi.episil.com/,0212
+威宏科技股份有限公司,Vianextech*,False,TWN,Semiconductor (unclassified),https://www.vianextech.com,0213
+均豪精密工業股份有限公司,GPM (Gallant Precision Machining),True,TWN,Equipment,https://www.gpmcorp.com.tw/,0214
+泰特科技股份有限公司,Tmtc*,False,TWN,Unclassified,http://www.tmtc.com.tw/index.asp,0217
+啟賦科技股份有限公司,Chiff*,False,TWN,Unclassified,http://www.chiff.com.tw/,0218
+円星科技股份有限公司,M31 Technology,True,TWN,IP,https://www.m31tech.com/,0221
+愛普科技股份有限公司,AP Memory Technology,True,TWN,Fabless IC Design,http://www.apmemory.com,0222
+均華精密工業股份有限公司,Gmmcorp*,False,TWN,Unclassified,http://www.gmmcorp.com.tw/,0223
+志聖工業股份有限公司,C SUN Mfg,True,TWN,Equipment,https://www.csun.com.tw/,0226
+久元電子股份有限公司,Youngtek Electronics,True,TWN,OSAT / Test,http://www.ytec.com.tw/index.htm,0227
+華矽創新股份有限公司,Usinnoc*,False,TWN,Unclassified,https://usinnoc.com/,0228
+先進智能系統股份有限公司,Autosys*,False,TWN,Unclassified,https://www.autosys.com.tw,0229
+晶心科技股份有限公司,Andes Technology,True,TWN,CPU IP,http://www.andestech.com/,0232
+神盾股份有限公司,Egis Technology,True,TWN,Fabless IC Design,https://www.egistec.com/,0233
+家登精密工業股份有限公司,Gudeng Precision,True,TWN,EUV Infrastructure,https://www.gudeng.com/,0234
+巨有科技股份有限公司,Pgc*,False,TWN,Unclassified,https://www.pgc.com.tw/,0235
+立積電子股份有限公司,RichWave Technology,True,TWN,Fabless IC Design,http://www.richwave.com.tw/zh/index.aspx,0236
+偉詮電子股份有限公司,Weltrend Semiconductor,True,TWN,Fabless IC Design,http://www.weltrend.com.tw/en-global,0237
+勢流科技股份有限公司,Flotrend*,False,TWN,Unclassified,https://www.flotrend.com.tw/,0238
+恩萊特科技股份有限公司,Enlight Tec*,False,TWN,Unclassified,https://www.enlight-tec.com/,0239
+九谷國際科技實業有限公司,Jgitec*,False,TWN,Unclassified,https://www.jgitec.com/,0241
+安天德百電股份有限公司,Itweba*,False,TWN,Unclassified,https://www.itweba.com/zh-TW/index/index.html,0242
+尚園科技股份有限公司,Machine Cover*,False,TWN,Unclassified,http://www.machine-cover.com/tw/,0243
+優肯科技股份有限公司,Ucandyna*,False,TWN,Unclassified,https://www.ucandyna.com/,0244
+達航科技股份有限公司,Ofunatech*,False,TWN,Semiconductor (unclassified),http://www.ofunatech.com,0246
+天鈺科技股份有限公司,Fitipower Integrated Technology,True,TWN,Fabless IC Design,https://www.fitipower.com/,0249
+益芯科技股份有限公司,Cmsc*,False,TWN,Unclassified,https://www.cmsc.com.tw,0251
+凌陽創新科技股份有限公司,Sunplus Innovation Technology,True,TWN,Fabless IC Design,www.sunplusit.com%20,0252
+新武股份有限公司,Shinbu*,False,TWN,Unclassified,http://www.shinbu.com.tw/,0253
+中華精測科技股份有限公司,CHPT (Chunghwa Precision Test Tech),True,TWN,Test / Probe Cards,https://www.chpt.com/,0256
+聯詠科技股份有限公司,Novatek Microelectronics,True,TWN,Fabless IC Design,https://www.novatek.com.tw/,0257
+銳德精密股份有限公司,Sogotec*,False,TWN,Unclassified,https://www.sogotec.com.tw/,0260
+東捷科技股份有限公司,Contrel*,False,TWN,Unclassified,https://www.contrel.com.tw/,0262
+譜威科技顧問股份有限公司,Prowavegroup*,False,TWN,Unclassified,https://www.prowavegroup.com/h/Index?key=013537177978#3,0264
+呈睿國際股份有限公司,Wpic*,False,TWN,Semiconductor (unclassified),https://www.wpic.com.tw/,0265
+正言權業不銹鋼有限公司,Jenyen*,False,TWN,Unclassified,https://www.jenyen.com/,0266
+鈺祥企業股份有限公司,Yesiang*,False,TWN,Unclassified,https://www.yesiang.com,0267
+奇鼎科技股份有限公司,Chd Tech*,False,TWN,Semiconductor (unclassified),http://www.chd-tech.com.tw/tw/,0268
+政美應用股份有限公司,Cmi Tw*,False,TWN,Unclassified,https://www.cmi-tw.com,0269
+德微科技股份有限公司,Eris Technology,True,TWN,Discrete Semiconductors,https://www.eris.com.tw/about.php,0270
+添御股份有限公司,Teen Yu*,False,TWN,Unclassified,http://www.teen-yu.com.tw/,0271
+昇陽國際半導體股份有限公司,Phoenix Silicon International (PSI),True,TWN,Wafer Reclaim,https://www.psi.com.tw/,0272
+南岩半導體股份有限公司,Nanotechsemi*,False,TWN,Semiconductor (unclassified),http://www.nanotechsemi.com.tw/index-4.html,0274
+擷發科技股份有限公司,Micro Ip*,False,TWN,Semiconductor (unclassified),https://www.micro-ip.com/,0275
+慧榮科技股份有限公司,Silicon Motion Technology,True,TWN,Fabless IC Design,https://www.siliconmotion.com/,0277
+晶彩科技股份有限公司,Favite*,False,TWN,Unclassified,https://www.favite.com/,0279
+崇越科技股份有限公司,Topco Scientific,True,TWN,Materials Distribution,http://www.topco-global.com,0280
+金兆益科技股份有限公司,Newfast Semi*,False,TWN,Semiconductor (unclassified),https://www.newfast-semi.com,0282
+景碩科技股份有限公司,Kinsus Interconnect,True,TWN,IC Substrates,www.kinsus.com.tw,0284
+群智自動化機械有限公司,Chunchin*,False,TWN,Unclassified,https://www.chunchin.com.cn/,0286
+翔緯光電股份有限公司,Shyawei*,False,TWN,Unclassified,https://www.shyawei.com.tw/,0287
+圓達科技股份有限公司,Futc*,False,TWN,Unclassified,https://www.futc.com.tw/,0289
+盟立自動化股份有限公司,Mirle Automation,True,TWN,Equipment / Automation,https://www.mirle.com.tw/,0291
+明坤科技股份有限公司,Mingkun Tech*,False,TWN,Semiconductor (unclassified),https://www.mingkun-tech.com/,0292
+華立企業股份有限公司,Wah Lee Industrial,True,TWN,Materials Distribution,www.wahlee.com,0293
+長廣精機股份有限公司,Eternal Epm*,False,TWN,Unclassified,https://www.eternal-epm.com/,0297
+萬潤科技股份有限公司,Allring Tech*,False,TWN,Semiconductor (unclassified),https://www.allring-tech.com.tw/,0298
+弘塑科技股份有限公司,Grand Process Technology (GPTC),True,TWN,Equipment,https://www.gptc.com.tw,0299
+永喬科技有限公司,New Job*,False,TWN,Unclassified,https://www.new-job.com.tw/,0300
+辛耘企業股份有限公司,Scientech,True,TWN,Equipment / Wet Process,https://www.scientech.com.tw/,0301
+瑞鼎科技股份有限公司,Raydium Semiconductor,True,TWN,Fabless IC Design,%20www.rad-ic.com,0302
+可成應材科技有限公司,Kanaue*,False,TWN,Unclassified,https://www.kanaue.com,0303
+台灣奈微光科技股份有限公司,Nmirp*,False,TWN,Unclassified,https://www.nmirp.com/zh-tw,0304
+中國砂輪企業股份有限公司,Kinik Company,True,TWN,CMP Pad Conditioners,https://www.kinik.com.tw/zh-tw/,0305
+九彥科技股份有限公司,Jyan*,False,TWN,Unclassified,https://www.jyan.com.tw/,0306
+榮宗科技有限公司,Jctprovider*,False,TWN,Unclassified,https://jctprovider.com.tw/,0308
+威鈦淨材股份有限公司,Ncmtw*,False,TWN,Unclassified,https://www.ncmtw.com/,0309
+資騰科技股份有限公司,Stc*,False,TWN,Unclassified,www.stc.tw,0310
+由田新技股份有限公司,Utechzone,True,TWN,Machine Vision / Inspection,https://www.utechzone.com.tw/index.php?lang=tw,0311
+臻鼎科技控股股份有限公司,Zhen Ding Technology (ZDT),True,TWN,PCB / Substrates,https://www.zdtco.com/tw,0312
+大量科技股份有限公司,Tlhome*,False,TWN,Unclassified,https://www.tlhome.com.tw/,0313
+群翊工業股份有限公司,Gpline*,False,TWN,Unclassified,https://www.gpline.com.tw/,0314
+京鼎精密科技股份有限公司,Foxsemicon (FITI),True,TWN,Fab Equipment Modules,www.foxsemicon.com,0315
+光陽光電股份有限公司,Sunsun Tech*,False,TWN,Semiconductor (unclassified),https://www.sunsun-tech.com.tw/,0316
+錐光金屬股份有限公司,Aap Tech*,False,TWN,Semiconductor (unclassified),https://www.aap-tech.com/en,0317
+錡曄電子股份有限公司,Bsisemi*,False,TWN,Semiconductor (unclassified),https://bsisemi.com/,0318
+致茂電子股份有限公司,Chroma ATE,True,TWN,Test / Measurement,www.chromaate.com/tw/index,0319
+中勤實業股份有限公司,Ckplas*,False,TWN,Unclassified,www.ckplas.com,0320
+總宇精密機械有限公司,Zongyupm*,False,TWN,Unclassified,www.zongyupm.com,0321
+高亮興業股份有限公司,Kaolight Dismantle*,False,TWN,Unclassified,https://kaolight-dismantle.com/,0322
+復盛股份有限公司,Fusheng,True,TWN,Compressors,https://www.fusheng.com/,0323
+德鋼金屬工業有限公司,Intertech Metalworks*,False,TWN,Semiconductor (unclassified),https://www.intertech-metalworks.com/,0324
+一安智能股份有限公司,Janus Cyber*,False,TWN,Unclassified,https://www.janus-cyber.com/,0325
+科斯邁股份有限公司,Coresemicorp*,False,TWN,Semiconductor (unclassified),https://coresemicorp.com/,0326
+亞智科技股份有限公司,Manz (Taiwan),True,TWN,Equipment,https://www.manz.com.tw/,0327
+日揚科技股份有限公司,Htcvacuum*,False,TWN,Unclassified,https://www.htcvacuum.com,0328
+宇霆科技股份有限公司,Piezoultra*,False,TWN,Unclassified,https://piezoultra.com/,0329
+偉勝乾燥工業股份有限公司,Wei Sun Oven*,False,TWN,Unclassified,https://www.wei-sun-oven.com/,0330
+亞東工業氣體股份有限公司,Air Liquide Far Eastern,True,TWN,Industrial Gases,https://tw.airliquide.com/zh,0331
+台灣新思科技股份有限公司,Synopsys (Taiwan),True,TWN,IP / EDA,http://www.synopsys.com,1008
+霖豐股份有限公司,Limchemical*,False,TWN,Semiconductor (unclassified),http://www.limchemical.com.tw,1017
+愛爾蘭商益華科技股份有限公司台灣分公司,Cadence Design Systems (Taiwan),True,TWN,IP / EDA,http://www.cadence.com,1027
+豪璨應用材料有限公司,Gracehaozan*,False,TWN,Unclassified,http://www.gracehaozan.com/,1028
+美商國際半導體產業有限公司台灣分公司,SEMI (Taiwan),True,TWN,Industry Association,http://www.semi.org,1040
+格羅方德半導體股份有限公司,GlobalFoundries,True,TWN,Foundry,http://www.globalfoundries.com,1041
+台灣千住電子股份有限公司,Senju Metal (Taiwan),True,TWN,Materials / Solder,http://www.senju.com.tw,1047
+英福康有限公司,INFICON,True,TWN,Vacuum Instruments,http://www.inficon.com,1051
+歐陸艾文斯材料科技股份有限公司,EAG Laboratories,True,TWN,Materials Analysis,http://www.eaglabs.com,1054
+阿托科技股份有限公司,Atotech (MKS),True,TWN,Plating Chemicals,www.atotech.com\taiwan,1084
+阡隆科技實業有限公司,Dimond Shamrock*,False,TWN,Unclassified,http://www.dimond-shamrock.com/,1094
+台灣先藝科技股份有限公司,ASM (Taiwan),True,TWN,Equipment,http://www.asm.com,1096
+永豐金證券股份有限公司匯立分公司,Clsa*,False,TWN,Unclassified,http://www.clsa.com,1104
+新加坡商英特格股份有限公司台灣分公司,Entegris (Taiwan),True,TWN,Materials,https://www.entegris.com/,1116
+飛翰外國法事務律師事務所,Finnegan (law firm),True,TWN,Service / Affiliate,http://www.finnegan.com,1120
+華懋科技股份有限公司,Dtech Group*,False,TWN,Semiconductor (unclassified),http://www.dtech-group.com/,1122
+新萊應材科技有限公司,Advantorr*,False,TWN,Unclassified,http://www.advantorr.com,1125
+鷹鼎科技股份有限公司,Insye*,False,TWN,Unclassified,http://www.insye.com,1126
+東京威力科創股份有限公司,Tokyo Electron (Taiwan),True,TWN,Equipment,https://www.tel.com/,1133
+安侯建業聯合會計師事務所,KPMG (Taiwan),True,TWN,Service / Affiliate,http://www.kpmg.com.tw,1134
+財團法人資訊工業策進會,III (Institute for Information Industry),True,TWN,R&D / Affiliate,http://www.iii.org.tw/,1141
+三福氣體股份有限公司,San Fu / Air Products (Taiwan),True,TWN,Industrial Gases,http://www.airproducts.com.tw,1146
+聯亞科技股份有限公司,Linde LienHwa,True,TWN,Industrial Gases,https://www.linde-lienhwa.com/tw,1153
+台灣雲端物聯網產業協會,Taiwan Cloud IoT Association,True,TWN,Industry Association,http://www.twcloud.org.tw,1156
+資誠聯合會計師事務所,PwC (Taiwan),True,TWN,Service / Affiliate,http://www.pwc.tw/,1159
+社團法人台灣玉山科技協會,Monte Jade Science & Technology Assoc.,True,TWN,Industry Association,https://www.mjtaiwan.org.tw/pages/,1161
+勤業眾信聯合會計師事務所,Deloitte (Taiwan),True,TWN,Service / Affiliate,https://www2.deloitte.com/tw/tc.html,1162
+台灣敦豪供應鏈股份有限公司,DHL Supply Chain (Taiwan),True,TWN,Logistics / Affiliate,http://www.dhl.com.tw/zt.html,1163
+台灣智慧物聯網產業協會,Taiwan AIoT Association,True,TWN,Industry Association,http://www.twiota.org/,1164
+科勝科技股份有限公司,Utitech*,False,TWN,Semiconductor (unclassified),https://www.utitech.com.tw/,1165
+台灣電子製造設備工業同業公會,TEEIA (Equipment Industry Assoc.),True,TWN,Industry Association,http://www.teeia.org.tw,1168
+安永聯合會計師事務所,EY (Taiwan),True,TWN,Service / Affiliate,https://www.ey.com/zh_tw,1169
+台灣肥料股份有限公司,Taiwan Fertilizer,True,TWN,Materials / Chemicals,https://www.taifer.com.tw/,1172
+台灣電路板協會,TPCA (Taiwan PCB Association),True,TWN,Industry Association,https://www.tpca.org.tw/,1174
+日商瑞穗銀行股份有限公司台北分公司,Mizuho Bank (Taipei),True,TWN,Finance / Affiliate,https://www.mizuhogroup.com/asia-pacific/taiwan/cn,1175
+中華民國對外貿易發展協會,TAITRA,True,TWN,Trade / Affiliate,https://www.taitra.org.tw/,1176
+中華電信股份有限公司企業客戶分公司,Chunghwa Telecom,True,TWN,Telecom / Affiliate,https://www.cht.com.tw/home/enterprise,1178
+捷孚凱行銷研究顧問有限公司,NielsenIQ / GfK,True,TWN,Service / Affiliate,https://nielseniq.com/global/en/products/gfk-supply-chain-and-industry-market-analytics/,1180
+台灣經濟新報文化事業股份有限公司,TEJ (Taiwan Economic Journal),True,TWN,Data / Affiliate,https://www.tej.com.tw/,1181
+台灣被動元件產業協會,Taiwan Passive Component Association,True,TWN,Industry Association,https://www.tpcia.org.tw/,1183
+皮托科技股份有限公司,Pitotech,True,TWN,Equipment / Distribution,https://www.pitotech.com.tw/,1187
+台灣半導體與光電材料元件產業協會,TSOMDA (Materials & Devices Assoc.),True,TWN,Industry Association,https://www.tsomda.org.tw/zh-tw,1191
+台灣艾司摩爾股份有限公司,ASML (Taiwan),True,TWN,Lithography,http://www.asml.com,2003
+台灣住友培科股份有限公司,Sumitomo Bakelite (Taiwan),True,TWN,Materials,https://www.sumibe.co.jp,2005
+安謀國際科技股份有限公司,Arm (Taiwan),True,TWN,IP,https://www.arm.com/,2009
+台灣歐姆龍股份有限公司,Omron (Taiwan),True,TWN,Automation,www.omron.com.tw,2012
+台灣愛思開新材料股份有限公司,SK Materials (Taiwan),True,TWN,Materials / Specialty Gases,www.sk-materials.com,2014
+優志旺股份有限公司,Ushio (Taiwan),True,TWN,Light Sources,www.ushio.com.tw,2017
+台灣美光記憶體股份有限公司,Micron (Taiwan),True,TWN,Memory,http://www.micron.com/,2019
+艾克爾先進科技股份有限公司,Amkor (Taiwan),True,TWN,OSAT / Test,https://www.amkor.com,2020
+大塚科技股份有限公司,Otsuka Techno (Taiwan),True,TWN,Materials / Chemicals,http://otsuka-tw.com/,2025
+默克先進科技材料股份有限公司,Merck Advanced Materials,True,TWN,Materials,https://www.merckgroup.com/en,2026
+美商昂圖科技(股)公司台灣分公司,Onto Innovation (Taiwan),True,TWN,Metrology,https://ontoinnovation.com/,2030
+台灣迪恩士半導體科技股份有限公司,SCREEN Semiconductor (Taiwan),True,TWN,Equipment,http://www.screen.com.tw,2031
+美商泰瑞達有限公司台灣分公司,Teradyne (Taiwan),True,TWN,Test,https://www.teradyne.com/,2035
+台灣濱松光子學有限公司,Hamamatsu Photonics (Taiwan),True,TWN,Photonics,https://www.hamamatsu.com/jp/en.html,2039
+漢鐘真空科技股份有限公司,Hanbell Vacuum,True,TWN,Vacuum Pumps,http://www.hanbell.com/,2041
+台灣伸和控制工業股份有限公司,Shinwa Controls (Taiwan),True,TWN,Temp Control / Chillers,www.shinwa-cont.com,2042
+奧地利商艾美斯電子束科技有限公司台灣分公司,IMS Nanofabrication,True,TWN,Mask Writers,https://www.ims.co.at/en/,2043
+美商邁凌科技有限公司台灣分公司,MaxLinear (Taiwan),True,TWN,Fabless IC Design,https://www.maxlinear.com/,2044
+台灣荏原精密股份有限公司,Ebara Precision (Taiwan),True,TWN,Equipment,https://www.ebara-tep.com.tw/,2045
+台灣康肯環保設備股份有限公司,Kanken Techno (Taiwan),True,TWN,Abatement,https://www.kanken-techno.co.jp/,2047
+香港商達思系統(股)公司台灣分公司,Das Ee*,False,TWN,Unclassified,https://www.das-ee.com/zh-hant/,2049
+愛爾蘭商西門子電子設計自動化股份有限公司台灣分公司,Siemens EDA (Mentor),True,TWN,IP / EDA,https://eda.sw.siemens.com/en-US/,2050
+德商世創電子材料股份有限公司台灣分公司,Siltronic (Taiwan),True,TWN,Silicon Wafers,,2051
+大陸商上海概倫電子股份有限公司 台灣分公司,Primarius Technologies,True,TWN,IP / EDA,https://www.primarius-tech.com/,2052
+台灣大日本印刷股份有限公司,"DNP (Dai Nippon Printing, Taiwan)",True,TWN,Photomask,,2056
+美商堡頂有限公司,Castlepeakadvisors*,False,TWN,Unclassified,https://www.castlepeakadvisors.com/,2057
+卡爾蔡司股份有限公司,Carl Zeiss (Taiwan),True,TWN,Optics,https://www.zeiss.com.tw/semiconductor-manufacturing-technology/home.html%20,2058
+藝康企業股份有限公司,Ecolab (Taiwan),True,TWN,Materials / Chemicals,https://www.ecolab.com/,2059
+塞席爾商捷領顧問有限公司台灣分公司,Jladvisoryco*,False,TWN,Unclassified,www.jladvisoryco.com,2060
+優貝克科技股份有限公司,ULVAC (Taiwan),True,TWN,Equipment,www.ulvac.com.twproductsvacuumPump1_1?gad_source=1&gad_campaignid=10059077917&gbraid=0AAAAACicI85irHMSV4YJZSCZ83HSgKBD5&gclid=CjwKCAjwiezABhBZEiwAEbTPGI4h_F2fX4GKscmHdE6Joe0CvhYcCtFsZ9qeELDLlom8Vz3jd3OkqRoCSb0QAvD_BwE,2061
+中以聯科資訊系統安裝有限公司,Convergint*,False,TWN,Unclassified,https://www.convergint.com/,2062
+台灣普迪飛半導體技術有限公司,PDF Solutions (Taiwan),True,TWN,Yield / EDA,www.pdf.com,2063
+台灣捷時雅電子材料股份有限公司,JSR (Taiwan),True,TWN,Photoresist Materials,https://www.jsr.co.jp/,2064
+印度商賽恩特半導體股份有限公司,Cyient Semiconductor,True,TWN,Design Services,https://cyientsemi.com/,2065
+台灣帆軟有限公司,Fanruan*,False,TWN,Unclassified,https://www.fanruan.com/zh-tw/company,2066
