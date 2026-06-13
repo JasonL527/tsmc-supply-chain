@@ -495,7 +495,18 @@ def build_graph_and_scores(df: pd.DataFrame):
     out["migration_score"] = scores
     out["status"] = statuses
     bt = {k: round(v, 4) for k, v in betweenness.items()}
-    return out, G, bt
+    return out, bt
+
+
+def build_graph(df: pd.DataFrame) -> nx.DiGraph:
+    """Rebuild the DiGraph from the dataframe (not cached — avoids pickle issues)."""
+    G = nx.DiGraph()
+    for _, r in df.iterrows():
+        G.add_node(r["company_id"], name=r["name"], tier=r["tier"], category=r["category"])
+    for _, r in df.iterrows():
+        if r["supplies_to_id"]:
+            G.add_edge(r["company_id"], r["supplies_to_id"])
+    return G
 
 
 def score_color(score: int) -> str:
@@ -787,7 +798,8 @@ def build_tree_figure(df: pd.DataFrame) -> go.Figure:
 # 7. UI — HEADER, SIDEBAR, KPIs, TABS, DATAFRAME, EXPORT
 # ──────────────────────────────────────────────────────────────────────────────
 df_raw = generate_dataset()
-df, G, betweenness = build_graph_and_scores(df_raw)
+df, betweenness = build_graph_and_scores(df_raw)
+G = build_graph(df_raw)
 
 st.markdown(
     "<div class='sauron-title'>👁️ PROJECT SAURON</div>"
