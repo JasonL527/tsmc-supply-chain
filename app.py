@@ -25,7 +25,9 @@
 
 import math
 import random
+import re
 from datetime import date
+from pathlib import Path
 
 import folium
 import networkx as nx
@@ -188,6 +190,32 @@ C_YELLOW = "#ffd166"   # watchlist
 C_GREY = "#5c677d"     # domestic anchors
 C_CYAN = "#3fc1c9"     # tier-3 supply lines
 C_BLUE = "#4361ee"     # inbound global supply
+
+DATA_DIR = Path(__file__).parent / "data"
+
+# Representative semiconductor-hub coordinates per ISO-3 country code. Used to
+# place ETO / TSIA companies that have no precise HQ geocode (geo_precision =
+# "country-approx"); upgrade to exact via the Google Places stub later.
+COUNTRY_GEO = {
+    "TWN": (24.78, 121.01, "Taiwan"),       "USA": (37.37, -121.97, "USA"),
+    "CHN": (31.23, 121.47, "China"),        "KOR": (37.20, 127.07, "South Korea"),
+    "JPN": (35.68, 139.76, "Japan"),        "DEU": (51.05, 13.74, "Germany"),
+    "NLD": (51.41, 5.46, "Netherlands"),    "GBR": (52.20, 0.13, "UK"),
+    "FRA": (45.18, 5.72, "France"),         "SGP": (1.35, 103.82, "Singapore"),
+    "ITA": (45.46, 9.19, "Italy"),          "CHE": (47.38, 8.54, "Switzerland"),
+    "ISR": (32.79, 35.02, "Israel"),        "MYS": (5.41, 100.33, "Malaysia"),
+    "AUT": (46.61, 13.85, "Austria"),       "BEL": (50.88, 4.70, "Belgium"),
+    "IRL": (53.35, -6.26, "Ireland"),       "CAN": (45.42, -75.70, "Canada"),
+    "SWE": (59.33, 18.06, "Sweden"),        "FIN": (60.17, 24.94, "Finland"),
+}
+
+# Keywords that mark a global-supply input as AI-accelerator critical.
+AI_INPUT_KEYWORDS = (
+    "euv", "advanced packaging", "adv. pkg", "cowos", "hbm", "high bandwidth",
+    "assembly", "packaging", "substrate", "photoresist", "resist", "cmp",
+    "lithography", "etch", "deposition", "atomic layer", "wafer", "logic",
+    "gpu", "advanced cpu", "interconnect", "bonding", "test",
+)
 
 # Real Tier-2 direct suppliers / partners of TSMC (mock metrics).
 # phoenix: confirmed/announced AZ site coordinates (None = no site yet).
@@ -508,15 +536,237 @@ def generate_dataset(seed: int = 42) -> pd.DataFrame:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 3b. EXTERNAL DATA INGESTION  (ETO Chip Explorer + TSIA) with de-duplication
+# ──────────────────────────────────────────────────────────────────────────────
+# Provenance: real company names + (for ETO) real market-share relationships.
+# Metrics we cannot source (capex/labor intensity, revenue) remain illustrative,
+# consistent with the rest of the app. See data/SOURCES.md for attribution.
+
+_SUFFIX_RE = re.compile(
+    r"\b(corporation|corp|incorporated|inc|co|ltd|limited|llc|group|holding|holdings|"
+    r"company|plc|ag|nv|bv|sa|gmbh|kk|intl|international|taiwan|usa|america)\b"
+)
+_KNOWN_FOUNDRIES = {"tsmc", "samsung", "umc", "smic", "globalfoundries", "powerchip",
+                    "vanguard", "intel", "hua hong", "episil", "tower", "dbhitek"}
+_KNOWN_FABLESS = {"nvidia", "amd", "qualcomm", "broadcom", "mediatek", "apple", "arm",
+                  "realtek", "sunplus", "marvell", "cadence", "synopsys", "graphcore",
+                  "cerebras", "google", "tesla", "hisilicon", "cambricon", "xilinx"}
+
+
+def normalize_name(s: str) -> str:
+    """Collapse a company name to a dedup key (drop suffixes/parentheticals/punct)."""
+    s = str(s).lower()
+    s = re.sub(r"\(.*?\)", " ", s)
+    s = re.sub(r"[^a-z0-9 ]", " ", s)
+    s = _SUFFIX_RE.sub(" ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def is_ai_input(text: str) -> bool:
+    t = str(text).lower()
+    return any(k in t for k in AI_INPUT_KEYWORDS)
+
+
+def _flags_from_input(text: str):
+    """Infer (cowos, euv, upc) advanced-tech flags from an input/segment name."""
+    t = str(text).lower()
+    cowos = any(k in t for k in ("packaging", "assembly", "cowos", "substrate", "bonding", "interposer"))
+    euv = any(k in t for k in ("euv", "lithography", "photoresist", "resist", "mask"))
+    upc = any(k in t for k in ("chemical", "cmp", "slurry", "gas", "clean", "etch", "deposition", "material"))
+    return cowos, euv, upc
+
+
+def _role_and_intensity(role: str):
+    """Default (capital, labor) intensity by coarse role — illustrative."""
+    return {
+        "Foundry / IDM": (0.95, 0.30), "Equipment": (0.90, 0.35),
+        "Materials": (0.80, 0.45), "ATP / Packaging": (0.82, 0.58),
+        "Design / IP": (0.70, 0.40), "Memory": (0.92, 0.33),
+    }.get(role, (0.78, 0.48))
+
+
+@st.cache_data(show_spinner=False)
+def load_eto() -> pd.DataFrame:
+    """Real organizations + their headline market-share provision from ETO."""
+    pdir = DATA_DIR / "eto"
+    if not (pdir / "providers.csv").exists():
+        return pd.DataFrame()
+    providers = pd.read_csv(pdir / "providers.csv")
+    provision = pd.read_csv(pdir / "provision.csv")
+    inputs = pd.read_csv(pdir / "inputs.csv")
+    itype = dict(zip(inputs["input_id"], inputs["type"]))
+
+    orgs = providers[providers["provider_type"] == "organization"].copy()
+    # drop generic placeholders (e.g. "Various companies") — not real entities
+    orgs = orgs[~orgs["provider_name"].str.contains(
+        r"various|^other$|unknown|n/a|misc", case=False, na=False)]
+    prov = provision.copy()
+    prov["itype"] = prov["provided_id"].map(itype)
+
+    recs = []
+    for _, o in orgs.iterrows():
+        name = str(o["provider_name"]).strip()
+        sub = prov[prov["provider_name"] == name]
+        # headline = the input where this org holds the largest known share
+        headline, share, types = "Semiconductor supply", np.nan, []
+        if len(sub):
+            types = sub["itype"].dropna().tolist()
+            ranked = sub.sort_values("share_provided", ascending=False, na_position="last")
+            headline = str(ranked.iloc[0]["provided_name"])
+            share = ranked.iloc[0]["share_provided"]
+        key = normalize_name(name)
+        if key in _KNOWN_FOUNDRIES:
+            role = "Foundry / IDM"
+        elif key in _KNOWN_FABLESS or "design_resource" in types:
+            role = "Design / IP"
+        elif any("assembly" in str(h).lower() or "packaging" in str(h).lower() for h in [headline]):
+            role = "ATP / Packaging"
+        elif "tool_resource" in types:
+            role = "Equipment"
+        elif "material_resource" in types:
+            role = "Materials"
+        else:
+            role = "Supply-base"
+        recs.append(dict(
+            src_name=name, country_code=str(o["country"]) if pd.notna(o["country"]) else "",
+            role=role, headline=headline, market_share_pct=share,
+        ))
+    return pd.DataFrame(recs)
+
+
+@st.cache_data(show_spinner=False)
+def load_tsia() -> pd.DataFrame:
+    """TSIA member directory — page 1 (partial). Chinese original preserved."""
+    f = DATA_DIR / "tsia" / "members.csv"
+    if not f.exists():
+        return pd.DataFrame()
+    return pd.read_csv(f)
+
+
+@st.cache_data(show_spinner="Ingesting ETO + TSIA data…")
+def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
+    """Merge curated TSMC tree + ETO + TSIA into one deduped frame.
+
+    Curated rows are authoritative (precise coords, Phoenix intel, tier tree).
+    External rows enrich a match (adds market share + source tag) or are appended
+    as global supply-base nodes (country-approx coords, outside the curated tree).
+    """
+    df = generate_dataset(seed).copy()
+    # annotate curated rows with the new provenance columns
+    df["data_source"] = "Curated"
+    df["local_name"] = ""
+    df["role"] = df["category"]
+    df["market_share_pct"] = np.nan
+    df["geo_precision"] = "site"
+    df["in_core_tree"] = True
+
+    by_key = {normalize_name(n): i for i, n in zip(df.index, df["name"])}
+    rng = random.Random(seed + 7)
+    new_rows = []
+    next_id = 1
+
+    def enrich(idx, source, share=np.nan, local=""):
+        cur = df.at[idx, "data_source"]
+        if source not in cur:
+            df.at[idx, "data_source"] = f"{cur} + {source}"
+        if pd.notna(share) and pd.isna(df.at[idx, "market_share_pct"]):
+            df.at[idx, "market_share_pct"] = share
+        if local and not df.at[idx, "local_name"]:
+            df.at[idx, "local_name"] = local
+
+    # ── ETO organizations ──
+    eto = load_eto()
+    for _, e in eto.iterrows():
+        key = normalize_name(e["src_name"])
+        if not key:
+            continue
+        if key in by_key:
+            if by_key[key] is not None:                 # match an existing curated row
+                enrich(by_key[key], "ETO", e["market_share_pct"])
+            # else: duplicate within ETO already reserved — drop the second copy
+            continue
+        cc = e["country_code"]
+        geo = COUNTRY_GEO.get(cc)
+        if geo:
+            lat = geo[0] + rng.uniform(-0.25, 0.25)
+            lon = geo[1] + rng.uniform(-0.25, 0.25)
+            country = geo[2]
+        else:
+            lat, lon, country = np.nan, np.nan, (cc or "Unknown")
+        cowos, euv, upc = _flags_from_input(e["headline"])
+        cap, lab = _role_and_intensity(e["role"])
+        ai = is_ai_input(e["headline"]) or e["role"] in ("Foundry / IDM", "ATP / Packaging") or euv or cowos
+        rid = f"E-{next_id:03d}"
+        next_id += 1
+        new_rows.append(dict(
+            company_id=rid, name=str(e["src_name"]), tier=2,
+            category=e["role"], product=str(e["headline"]),
+            city=country, country=country, lat=lat, lon=lon,
+            supplies_to=f"{e['headline']} (global market)", supplies_to_id=None,
+            cowos=cowos, euv=euv, upc=upc,
+            capital_intensity=cap, labor_intensity=lab,
+            revenue_musd=np.nan, employees=np.nan,
+            tsmc_dependence_pct=np.nan, us_presence=(cc == "USA"),
+            phoenix_lat=np.nan, phoenix_lon=np.nan, ai_supply_chain=bool(ai),
+            data_source="ETO", local_name="", role=e["role"],
+            market_share_pct=e["market_share_pct"],
+            geo_precision=("country-approx" if geo else "ungeocoded"),
+            in_core_tree=False,
+        ))
+        by_key[key] = None  # reserve so later sources dedup against it
+
+    df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True) if new_rows else df
+    by_key = {normalize_name(n): i for i, n in zip(df.index, df["name"])}
+
+    # ── TSIA members ──
+    tsia = load_tsia()
+    tsia_rows = []
+    for _, t in tsia.iterrows():
+        key = normalize_name(t["name"])
+        if key in by_key:
+            enrich(by_key[key], "TSIA", local=str(t["local_name"]))
+            continue
+        geo = COUNTRY_GEO.get(t["country"], COUNTRY_GEO["TWN"])
+        lat = geo[0] + rng.uniform(-0.25, 0.25)
+        lon = geo[1] + rng.uniform(-0.25, 0.25)
+        seg = str(t["segment"])
+        cowos, euv, upc = _flags_from_input(seg)
+        ai = is_ai_input(seg) or "foundry" in seg.lower() or "memory" in seg.lower()
+        rid = f"S-{len(tsia_rows) + 1:03d}"
+        tsia_rows.append(dict(
+            company_id=rid, name=str(t["name"]), tier=2,
+            category=seg, product=seg, city=geo[2], country=geo[2],
+            lat=lat, lon=lon, supplies_to="TSIA member (Taiwan)", supplies_to_id=None,
+            cowos=cowos, euv=euv, upc=upc,
+            capital_intensity=0.80, labor_intensity=0.45,
+            revenue_musd=np.nan, employees=np.nan,
+            tsmc_dependence_pct=np.nan, us_presence=False,
+            phoenix_lat=np.nan, phoenix_lon=np.nan, ai_supply_chain=bool(ai),
+            data_source="TSIA", local_name=str(t["local_name"]), role=seg,
+            market_share_pct=np.nan, geo_precision="country-approx", in_core_tree=False,
+        ))
+        by_key[key] = None
+
+    if tsia_rows:
+        df = pd.concat([df, pd.DataFrame(tsia_rows)], ignore_index=True)
+    return df
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 4. NETWORKX GRAPH + AI CRITICALITY / MIGRATION SCORING ENGINE
 # ──────────────────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def build_graph_and_scores(df: pd.DataFrame):
-    """Build the directed supply graph (supplier → customer) and score every node."""
+    """Build the directed supply graph (supplier → customer) and score every node.
+
+    Centrality is computed on the curated TSMC tree only (in_core_tree); the
+    ETO/TSIA global supply base has no modeled directed edges to TSMC, so adding
+    them as isolated nodes would distort everyone's centrality."""
+    core = df[df["in_core_tree"]] if "in_core_tree" in df.columns else df
     G = nx.DiGraph()
-    for _, r in df.iterrows():
+    for _, r in core.iterrows():
         G.add_node(r["company_id"], name=r["name"], tier=r["tier"], category=r["category"])
-    for _, r in df.iterrows():
+    for _, r in core.iterrows():
         if r["supplies_to_id"]:
             G.add_edge(r["company_id"], r["supplies_to_id"])
 
@@ -536,6 +786,7 @@ def build_graph_and_scores(df: pd.DataFrame):
         Existing US presence              +8    (beachhead established)
         Network centrality                +0–10 (chokepoint suppliers get pulled)
         Revenue scale                     +0–5  (ability to fund a US plant)
+        Market-share criticality          +0–10 (ETO real share — dominance ⇒ pull)
         """
         s = 20.0
         if r["cowos"]:
@@ -545,11 +796,17 @@ def build_graph_and_scores(df: pd.DataFrame):
         if r["upc"]:
             s += 20
         s += float(np.clip((r["capital_intensity"] - r["labor_intensity"]) * 30, -15, 15))
-        s += r["tsmc_dependence_pct"] * 0.10
+        if pd.notna(r["tsmc_dependence_pct"]):
+            s += r["tsmc_dependence_pct"] * 0.10
         if r["us_presence"]:
             s += 8
         s += min(centrality.get(r["company_id"], 0) * 60, 10)
-        s += min(math.log10(max(r["revenue_musd"], 1)) / 4, 1) * 5
+        if pd.notna(r["revenue_musd"]):
+            s += min(math.log10(max(r["revenue_musd"], 1)) / 4, 1) * 5
+        # Real ETO market share: a dominant global supplier is a chokepoint TSMC
+        # cannot easily re-source, so Phoenix must pull it along.
+        if pd.notna(r.get("market_share_pct")):
+            s += min(float(r["market_share_pct"]) / 10.0, 10)
         return int(np.clip(s, 1, 100))
 
     scores, statuses = [], []
@@ -581,11 +838,12 @@ def build_graph_and_scores(df: pd.DataFrame):
 
 
 def build_graph(df: pd.DataFrame) -> nx.DiGraph:
-    """Rebuild the DiGraph from the dataframe (not cached — avoids pickle issues)."""
+    """Rebuild the curated-tree DiGraph (not cached — avoids pickle issues)."""
+    core = df[df["in_core_tree"]] if "in_core_tree" in df.columns else df
     G = nx.DiGraph()
-    for _, r in df.iterrows():
+    for _, r in core.iterrows():
         G.add_node(r["company_id"], name=r["name"], tier=r["tier"], category=r["category"])
-    for _, r in df.iterrows():
+    for _, r in core.iterrows():
         if r["supplies_to_id"]:
             G.add_edge(r["company_id"], r["supplies_to_id"])
     return G
@@ -631,22 +889,39 @@ def gshift(lon: float) -> float:
 
 def popup_html(r) -> str:
     c = score_color(int(r["migration_score"]))
+    src = r.get("data_source", "Curated")
+    dep = (f"TSMC dependence: {int(r['tsmc_dependence_pct'])}%<br>"
+           if pd.notna(r.get("tsmc_dependence_pct")) else "")
+    share = (f"<span style='color:#3fc1c9'>ETO market share: "
+             f"<b>{float(r['market_share_pct']):.1f}%</b></span><br>"
+             if pd.notna(r.get("market_share_pct")) else "")
+    geo = ("<span style='color:#7a8699;font-size:10px'>⚲ country-approx location</span><br>"
+           if r.get("geo_precision") == "country-approx" else "")
+    local = (f"<span style='color:#8d99ae'>{r['local_name']}</span><br>"
+             if r.get("local_name") else "")
     return (
         "<div style='font-family:monospace;background:#0b0f1a;color:#e6e6e6;"
         "padding:10px;min-width:230px;border-radius:6px'>"
         f"<b style='color:{c};font-size:13px'>{r['name']}</b><br>"
+        f"{local}"
         f"<span style='color:#8d99ae'>Tier {r['tier']} · {r['category']}</span><br>"
         f"<span style='color:#8d99ae'>{r['product']}</span><br><br>"
         f"Migration score: <b style='color:{c}'>{int(r['migration_score'])}/100</b><br>"
         f"Status: {r['status']}<br>"
+        f"{share}"
         f"Supplies → {r['supplies_to']}<br>"
-        f"TSMC dependence: {int(r['tsmc_dependence_pct'])}%"
+        f"{dep}{geo}"
+        f"<span style='color:#5c677d;font-size:10px'>source: {src}</span>"
         "</div>"
     )
 
 
 def add_company_marker(m, r, lat, lon, radius_scale=1.0):
+    if pd.isna(lat) or pd.isna(lon):   # ungeocoded external rows
+        return
     sc = int(r["migration_score"])
+    # country-approx markers get a hollow ring to distinguish from precise sites
+    approx = r.get("geo_precision") == "country-approx"
     folium.CircleMarker(
         location=(lat, lon),
         radius=(3 + sc / 14) * radius_scale,
@@ -654,7 +929,7 @@ def add_company_marker(m, r, lat, lon, radius_scale=1.0):
         weight=1.5,
         fill=True,
         fill_color=score_color(sc),
-        fill_opacity=0.75 if r["tier"] < 3 else 0.55,
+        fill_opacity=0.15 if approx else (0.75 if r["tier"] < 3 else 0.55),
         tooltip=f"{r['name']} · {sc}/100",
         popup=folium.Popup(popup_html(r), max_width=300),
     ).add_to(m)
@@ -694,8 +969,11 @@ def build_global_map(df: pd.DataFrame, show_arcs: bool) -> folium.Map:
     ).add_to(m)
 
     if show_arcs:
+        # Arcs are drawn only for the curated TSMC tree — the ETO/TSIA global
+        # supply base shows as markers, not speculative migration corridors.
+        core = df[df["in_core_tree"]] if "in_core_tree" in df.columns else df
         # Outbound migration corridors: Taiwan → Phoenix
-        tw = df[(df["country"] == "Taiwan") & (df["tier"] > 1)]
+        tw = core[(core["country"] == "Taiwan") & (core["tier"] > 1)]
         for _, r in tw.iterrows():
             announced = pd.notna(r["phoenix_lat"])
             if not announced and r["migration_score"] < 60:
@@ -711,8 +989,8 @@ def build_global_map(df: pd.DataFrame, show_arcs: bool) -> folium.Map:
                                 tooltip=f"{r['name']} → Fab 21 (projected, {int(r['migration_score'])}/100)"
                                 ).add_to(m)
 
-        # Inbound global supply: foreign Tier-2 → TSMC Hsinchu
-        for _, r in df[(df["country"] != "Taiwan") & (df["tier"] == 2)].iterrows():
+        # Inbound global supply: foreign curated Tier-2 → TSMC Hsinchu
+        for _, r in core[(core["country"] != "Taiwan") & (core["tier"] == 2)].iterrows():
             pts = curved_points((r["lat"], gshift(r["lon"])), TSMC_HQ, curvature=0.15)
             folium.PolyLine(pts, color=C_BLUE, weight=1.2, opacity=0.40, dash_array="2,8",
                             tooltip=f"{r['name']} → TSMC Hsinchu (inbound supply)").add_to(m)
@@ -775,9 +1053,10 @@ def build_phoenix_map(df: pd.DataFrame, show_arcs: bool) -> folium.Map:
                     dash_array=[10, 20], pulse_color=C_YELLOW,
                     tooltip=f"{r['name']} ⇄ Fab 21").add_to(m)
 
-    # Projected landing zones: top Taiwan-based candidates without a site yet
-    cands = df[(df["country"] == "Taiwan") & (df["tier"] > 1)
-               & (df["phoenix_lat"].isna()) & (df["migration_score"] >= 60)]
+    # Projected landing zones: top curated Taiwan candidates without a site yet
+    core = df[df["in_core_tree"]] if "in_core_tree" in df.columns else df
+    cands = core[(core["country"] == "Taiwan") & (core["tier"] > 1)
+                 & (core["phoenix_lat"].isna()) & (core["migration_score"] >= 60)]
     cands = cands.nlargest(10, "migration_score").reset_index(drop=True)
     for i, r in cands.iterrows():
         ang = 2 * math.pi * i / max(len(cands), 1)
@@ -806,6 +1085,10 @@ def build_phoenix_map(df: pd.DataFrame, show_arcs: bool) -> folium.Map:
 # 6. NETWORK TREE FIGURE (Plotly, hierarchical 3-tier layout)
 # ──────────────────────────────────────────────────────────────────────────────
 def build_tree_figure(df: pd.DataFrame) -> go.Figure:
+    # The "deep tree" is the curated TSMC backbone; the ETO/TSIA global supply
+    # base lives on the map + database, not in this directed 3-tier view.
+    if "in_core_tree" in df.columns:
+        df = df[df["in_core_tree"]]
     tsmc_id = "T1-00"
     t2 = df[df["tier"] == 2].sort_values("category").reset_index(drop=True)
     t3 = df[df["tier"] == 3]
@@ -879,7 +1162,7 @@ def build_tree_figure(df: pd.DataFrame) -> go.Figure:
 # ──────────────────────────────────────────────────────────────────────────────
 # 7. UI — HEADER, SIDEBAR, KPIs, TABS, DATAFRAME, EXPORT
 # ──────────────────────────────────────────────────────────────────────────────
-df_raw = generate_dataset()
+df_raw = build_unified_dataset()
 df, betweenness = build_graph_and_scores(df_raw)
 G = build_graph(df_raw)
 
@@ -891,11 +1174,12 @@ st.markdown(
 )
 
 st.warning(
-    "⚠️ **DEMO — All data is synthetic mock data.** "
-    "Company names are real; all metrics (revenues, coordinates, dependence percentages, "
-    "migration scores, announced-site locations) are illustrative placeholders. "
-    "Wire the OSINT stubs (ImportYeti / OpenCorporates / Google Places) at the bottom of "
-    "the page to replace with live intelligence.",
+    "⚠️ **MIXED DATA — read before trusting a number.** Company names are real. "
+    "**ETO market-share figures are real** (Georgetown CSET / ETO Chip Explorer, cited). "
+    "Everything else — revenues, employee counts, capex/labor intensity, geocoordinates, "
+    "migration scores, announced-site locations — is **illustrative placeholder**. "
+    "ETO/TSIA companies are placed at *country-approx* coordinates (not precise HQs). "
+    "Wire the OSINT stubs (ImportYeti / OpenCorporates / Google Places) to replace the rest.",
     icon=None,
 )
 
@@ -916,6 +1200,11 @@ with st.sidebar:
              "HBM memory, EUV / advanced logic, advanced substrates, leading-edge "
              "wafers & photoresist, and their Tier-3 inputs.",
     )
+    sources = st.multiselect(
+        "Data source", ["Curated", "ETO", "TSIA"], default=[],
+        help="Curated = hand-built TSMC tree · ETO = Georgetown CSET Chip Explorer "
+             "(real market shares) · TSIA = Taiwan Semiconductor Industry Assoc. members.",
+    )
     tiers = st.multiselect("Tier", [1, 2, 3], default=[1, 2, 3])
     cats = st.multiselect("Category", sorted(df["category"].unique()), default=[])
     countries = st.multiselect("Country", sorted(df["country"].unique()), default=[])
@@ -926,6 +1215,8 @@ with st.sidebar:
 mask = df["tier"].isin(tiers) & (df["migration_score"] >= min_score)
 if ai_only:
     mask &= df["ai_supply_chain"]
+if sources:
+    mask &= df["data_source"].apply(lambda s: any(src in s for src in sources))
 if cats:
     mask &= df["category"].isin(cats)
 if countries:
@@ -939,16 +1230,20 @@ df_map = pd.concat([df_f, df[df["tier"] == 1]]).drop_duplicates("company_id")
 
 # ── KPI strip ──
 scope = "🤖 AI supply chain" if ai_only else "full supply chain"
+n_eto = int(df["data_source"].str.contains("ETO").sum())
+n_tsia = int(df["data_source"].str.contains("TSIA").sum())
+n_share = int(df["market_share_pct"].notna().sum())
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 k1.metric("Companies tracked", f"{len(df_f)} / {len(df)}", help=f"Matching filter ({scope})")
-k2.metric("AI supply-chain nodes", int(df["ai_supply_chain"].sum()),
-          help="Companies on the AI-accelerator critical path")
-k3.metric("Prime targets (≥70, TW)",
+k2.metric("From ETO / TSIA", f"{n_eto} / {n_tsia}",
+          help="Real orgs ingested from Georgetown CSET ETO Chip Explorer and the "
+               "TSIA member directory (deduped against the curated set)")
+k3.metric("Real ETO market shares", n_share,
+          help="Companies carrying a real, cited ETO market-share figure")
+k4.metric("AI supply-chain nodes", int(df["ai_supply_chain"].sum()))
+k5.metric("Prime targets (≥70, TW)",
           int(((df["migration_score"] >= 70) & (df["country"] == "Taiwan") & (df["tier"] > 1)).sum()))
-k4.metric("Announced AZ sites", int((df["phoenix_lat"].notna() & (df["tier"] > 1)).sum()))
-k5.metric("CoWoS / EUV / UPC nodes",
-          int((df["cowos"] | df["euv"] | df["upc"]).sum()))
-k6.metric("Avg migration score", f"{df[df['tier'] > 1]['migration_score'].mean():.0f}/100")
+k6.metric("Announced AZ sites", int((df["phoenix_lat"].notna() & (df["tier"] > 1)).sum()))
 
 st.divider()
 
@@ -1027,8 +1322,9 @@ st.markdown("### 📡 TARGET DATABASE")
 st.caption(f"{len(df_f)} of {len(df)} companies match current filters. "
            "Click any column header to sort.")
 
-EXPORT_COLS = ["company_id", "name", "tier", "category", "product", "city", "country",
-               "lat", "lon", "supplies_to", "ai_supply_chain", "cowos", "euv", "upc",
+EXPORT_COLS = ["company_id", "name", "local_name", "data_source", "tier", "category",
+               "role", "product", "city", "country", "geo_precision", "lat", "lon",
+               "supplies_to", "ai_supply_chain", "cowos", "euv", "upc", "market_share_pct",
                "capital_intensity", "labor_intensity", "revenue_musd", "employees",
                "tsmc_dependence_pct", "us_presence", "migration_score", "status"]
 df_view = df_f[EXPORT_COLS].sort_values("migration_score", ascending=False)
@@ -1042,6 +1338,9 @@ st.dataframe(
         "migration_score": st.column_config.ProgressColumn(
             "US Migration Likelihood", min_value=0, max_value=100, format="%d"),
         "ai_supply_chain": st.column_config.CheckboxColumn("AI chain"),
+        "data_source": st.column_config.TextColumn("Source"),
+        "local_name": st.column_config.TextColumn("Local name"),
+        "market_share_pct": st.column_config.NumberColumn("ETO mkt share", format="%.1f%%"),
         "revenue_musd": st.column_config.NumberColumn("Revenue (M USD)", format="$%d M"),
         "tsmc_dependence_pct": st.column_config.NumberColumn("TSMC dep. %", format="%d%%"),
     },
@@ -1063,6 +1362,32 @@ with e1:
 with e2:
     st.caption("UTF-8 · flat single-header schema · no merged cells or nested fields. "
                "In Google Sheets: **File → Import → Upload → Replace spreadsheet**.")
+
+# ── Data provenance & attribution ──
+with st.expander("📚 DATA SOURCES & ATTRIBUTION — what's real vs. illustrative"):
+    st.markdown(
+        """
+- **ETO Chip Explorer** — *Emerging Technology Observatory, Georgetown CSET.*
+  374 real organizations + **real, cited market-share relationships** (e.g. ASML
+  = 100% of EUV tools). Derived from CSET, *The Semiconductor Supply Chain:
+  Assessing National Competitiveness* (2021), augmented by ETO (2022/2024).
+  Source repo: `github.com/georgetown-cset/eto-chip-explorer`. Credit ETO/CSET
+  when redistributing.
+- **TSIA** — Taiwan Semiconductor Industry Association member directory
+  (`tsia.org.tw`). **Partial: page 1 of 10** (20 members); pages 2–10 use
+  ASP.NET postback pagination + Chinese-only names, not yet harvested. Original
+  Chinese names preserved in the `local_name` column.
+- **SEMI member directory** — **not ingested.** `semi.org` returns HTTP 403
+  (bot protection) and gates the directory behind member login.
+- **De-duplication** — external rows are matched to curated companies by a
+  normalized-name key; a match *enriches* the curated row (adds market share +
+  source tag) rather than creating a duplicate. ETO/TSIA companies are placed at
+  **country-approx** coordinates (hollow rings on the map), upgradeable to precise
+  HQs via the Google Places stub below.
+- **Still illustrative:** revenues, employee counts, capex/labor intensity,
+  migration scores, and all announced-site coordinates.
+        """
+    )
 
 # ── OSINT pipeline stubs panel ──
 with st.expander("🔌 OSINT HARVESTING PIPELINE — live API integration points (stubs)"):
@@ -1088,7 +1413,7 @@ with st.expander("🔌 OSINT HARVESTING PIPELINE — live API integration points
 
 st.markdown(
     "<br><div style='color:#3a4358;font-family:monospace;font-size:11px'>"
-    "PROJECT SAURON v0.1 · MOCK DATA — pending live OSINT feeds · "
+    "PROJECT SAURON v0.2 · curated + ETO (real shares) + TSIA · deduped · "
     "one dashboard to find them, one dashboard to bring them all (to Phoenix)</div>",
     unsafe_allow_html=True,
 )
