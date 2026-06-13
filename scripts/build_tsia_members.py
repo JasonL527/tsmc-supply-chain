@@ -168,6 +168,27 @@ VERIFIED = {
     "2065": ("Cyient Semiconductor", "Design Services"),
 }
 
+# Members that are NOT part of the semiconductor supply chain (accounting/law/
+# finance/logistics firms, banks, trade bodies, industry associations, generic
+# software). Hidden by default in the app. Detected by segment keyword, plus an
+# explicit list for the asterisked ones whose fallback segment can't reveal it.
+# "affiliate" catches every "<x> / Affiliate" segment; "association" the bodies.
+# (Deliberately NOT matching bare "service" — that would flag "Design Services".)
+AFFILIATE_KEYWORDS = ("affiliate", "association")
+EXPLICIT_AFFILIATE_IDS = {
+    "1104",  # SinoPac / CLSA Securities (finance)
+    "2057",  # Castle Peak Advisors (finance advisory)
+    "2060",  # JL Advisory (advisory)
+    "2062",  # Convergint (security systems integrator)
+    "2066",  # FanRuan (BI software)
+}
+
+
+def is_affiliate(segment: str, key: str) -> bool:
+    s = segment.lower()
+    return key in EXPLICIT_AFFILIATE_IDS or any(k in s for k in AFFILIATE_KEYWORDS)
+
+
 # Segment guesses for unverified rows, keyed by hints in the domain (best effort).
 def fallback_segment(domain: str) -> str:
     d = domain.lower()
@@ -208,14 +229,18 @@ def main():
                 name = f"{brand}*"
                 segment = fallback_segment(brand_from_domain(site))
                 verified = "False"
-            rows_out.append([local, name, verified, "TWN", segment, site, mid])
+            affiliate = "True" if is_affiliate(segment, key) else "False"
+            rows_out.append([local, name, verified, affiliate, "TWN", segment, site, mid])
 
     with OUT.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["local_name", "name", "name_verified", "country", "segment", "website", "member_id"])
+        w.writerow(["local_name", "name", "name_verified", "affiliate",
+                    "country", "segment", "website", "member_id"])
         w.writerows(rows_out)
     v = sum(1 for r in rows_out if r[2] == "True")
-    print(f"Wrote {len(rows_out)} members → {OUT}  ({v} verified, {len(rows_out) - v} asterisked)")
+    a = sum(1 for r in rows_out if r[3] == "True")
+    print(f"Wrote {len(rows_out)} members → {OUT}  "
+          f"({v} verified, {len(rows_out) - v} asterisked; {a} non-semi affiliates)")
 
 
 if __name__ == "__main__":

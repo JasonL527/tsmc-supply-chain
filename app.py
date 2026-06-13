@@ -663,6 +663,7 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
     df["in_core_tree"] = True
     df["name_verified"] = True
     df["website"] = ""
+    df["affiliate"] = False
 
     by_key = {normalize_name(n): i for i, n in zip(df.index, df["name"])}
     rng = random.Random(seed + 7)
@@ -715,7 +716,7 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
             data_source="ETO", local_name="", role=e["role"],
             market_share_pct=e["market_share_pct"],
             geo_precision=("country-approx" if geo else "ungeocoded"),
-            in_core_tree=False, name_verified=True, website="",
+            in_core_tree=False, name_verified=True, website="", affiliate=False,
         ))
         by_key[key] = None  # reserve so later sources dedup against it
 
@@ -750,6 +751,7 @@ def build_unified_dataset(seed: int = 42) -> pd.DataFrame:
             data_source="TSIA", local_name=str(t["local_name"]), role=seg,
             market_share_pct=np.nan, geo_precision="country-approx", in_core_tree=False,
             name_verified=nv, website=str(t.get("website", "")),
+            affiliate=(t.get("affiliate") in (True, "True")),
         ))
         by_key[key] = None
 
@@ -1211,6 +1213,13 @@ with st.sidebar:
         help="Curated = hand-built TSMC tree · ETO = Georgetown CSET Chip Explorer "
              "(real market shares) · TSIA = Taiwan Semiconductor Industry Assoc. members.",
     )
+    show_affiliates = st.toggle(
+        "Show non-semiconductor members",
+        value=False,
+        help="TSIA's roster includes 25 non-supply-chain affiliates — banks, "
+             "accounting/law firms, logistics, trade bodies and industry "
+             "associations (incl. SEMI). Hidden by default.",
+    )
     tiers = st.multiselect("Tier", [1, 2, 3], default=[1, 2, 3])
     cats = st.multiselect("Category", sorted(df["category"].unique()), default=[])
     countries = st.multiselect("Country", sorted(df["country"].unique()), default=[])
@@ -1219,6 +1228,8 @@ with st.sidebar:
 
 # ── Apply filters (TSMC anchor always retained for map context) ──
 mask = df["tier"].isin(tiers) & (df["migration_score"] >= min_score)
+if not show_affiliates:
+    mask &= ~df["affiliate"]
 if ai_only:
     mask &= df["ai_supply_chain"]
 if sources:
