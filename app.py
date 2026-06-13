@@ -796,6 +796,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.warning(
+    "⚠️ **DEMO — All data is synthetic mock data.** "
+    "Company names are real; all metrics (revenues, coordinates, dependence percentages, "
+    "migration scores, announced-site locations) are illustrative placeholders. "
+    "Wire the OSINT stubs (ImportYeti / OpenCorporates / Google Places) at the bottom of "
+    "the page to replace with live intelligence.",
+    icon=None,
+)
+
 # ── Sidebar controls ──
 with st.sidebar:
     st.markdown("### 🎛️ COMMAND CONSOLE")
