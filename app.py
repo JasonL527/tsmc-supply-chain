@@ -272,6 +272,67 @@ TIER2_REAL = [
          lat=25.0570, lon=121.6120, cowos=False, euv=False, upc=False,
          capital=0.55, labor=0.72, revenue=2200, employees=3800,
          us_presence=True, tsmc_dep=70, phoenix=None),
+    # ── AI-accelerator critical path (HBM, wafers, photoresist, test, substrates) ──
+    dict(name="SK Hynix", category="HBM Memory",
+         product="HBM3E/HBM4 stacks for AI accelerators", city="Icheon", country="South Korea",
+         lat=37.2750, lon=127.4350, cowos=False, euv=True, upc=False,
+         capital=0.93, labor=0.32, revenue=30000, employees=31000,
+         us_presence=True, tsmc_dep=15, phoenix=None),
+    dict(name="Micron Technology", category="HBM Memory",
+         product="HBM3E, GDDR for AI / datacenter", city="Boise (ID)", country="USA",
+         lat=43.6150, lon=-116.2023, cowos=False, euv=True, upc=False,
+         capital=0.92, labor=0.33, revenue=25000, employees=48000,
+         us_presence=True, tsmc_dep=12, phoenix=None),
+    dict(name="Samsung Electronics", category="HBM Memory",
+         product="HBM3E + advanced foundry", city="Hwaseong", country="South Korea",
+         lat=37.2000, lon=127.0700, cowos=False, euv=True, upc=False,
+         capital=0.94, labor=0.30, revenue=60000, employees=75000,
+         us_presence=True, tsmc_dep=5, phoenix=None),
+    dict(name="Disco Corporation", category="Wafer Dicing & Grinding",
+         product="Precision dicing & grinding for CoWoS", city="Tokyo", country="Japan",
+         lat=35.6100, lon=139.6300, cowos=True, euv=False, upc=False,
+         capital=0.85, labor=0.40, revenue=2800, employees=6500,
+         us_presence=True, tsmc_dep=35, phoenix=None),
+    dict(name="Shin-Etsu Chemical", category="Silicon Wafers",
+         product="300mm prime wafers, EUV photoresist", city="Tokyo", country="Japan",
+         lat=35.6700, lon=139.7600, cowos=False, euv=True, upc=True,
+         capital=0.88, labor=0.42, revenue=16000, employees=25000,
+         us_presence=True, tsmc_dep=20, phoenix=None),
+    dict(name="SUMCO", category="Silicon Wafers",
+         product="300mm epitaxial & polished wafers", city="Tokyo", country="Japan",
+         lat=35.6600, lon=139.7300, cowos=False, euv=False, upc=True,
+         capital=0.86, labor=0.45, revenue=3000, employees=9000,
+         us_presence=True, tsmc_dep=25, phoenix=None),
+    dict(name="Tokyo Ohka Kogyo (TOK)", category="Photoresist",
+         product="EUV & ArF photoresist", city="Kawasaki", country="Japan",
+         lat=35.5300, lon=139.7000, cowos=False, euv=True, upc=True,
+         capital=0.80, labor=0.45, revenue=1300, employees=4000,
+         us_presence=True, tsmc_dep=28, phoenix=None),
+    dict(name="JSR Corporation", category="Photoresist",
+         product="EUV photoresist, CMP slurry", city="Tokyo", country="Japan",
+         lat=35.6580, lon=139.7510, cowos=False, euv=True, upc=True,
+         capital=0.82, labor=0.43, revenue=2500, employees=9000,
+         us_presence=True, tsmc_dep=22, phoenix=None),
+    dict(name="Ibiden", category="ABF Substrates",
+         product="ABF substrates for AI GPU packages", city="Ogaki", country="Japan",
+         lat=35.3590, lon=136.6120, cowos=True, euv=False, upc=False,
+         capital=0.84, labor=0.50, revenue=3000, employees=13000,
+         us_presence=False, tsmc_dep=30, phoenix=None),
+    dict(name="Shinko Electric", category="IC Substrates",
+         product="FC-BGA substrates, lead frames", city="Nagano", country="Japan",
+         lat=36.6510, lon=138.1810, cowos=True, euv=False, upc=False,
+         capital=0.81, labor=0.52, revenue=1800, employees=6000,
+         us_presence=False, tsmc_dep=28, phoenix=None),
+    dict(name="Advantest", category="Test Systems",
+         product="ATE for AI SoC & HBM test", city="Tokyo", country="Japan",
+         lat=35.6900, lon=139.6900, cowos=False, euv=False, upc=False,
+         capital=0.78, labor=0.45, revenue=4800, employees=7500,
+         us_presence=True, tsmc_dep=30, phoenix=None),
+    dict(name="Lam Research", category="Deposition / Etch Tools",
+         product="Etch, deposition, EUV dry resist", city="Fremont (CA)", country="USA",
+         lat=37.5490, lon=-121.9880, cowos=False, euv=True, upc=False,
+         capital=0.90, labor=0.36, revenue=14000, employees=17000,
+         us_presence=True, tsmc_dep=20, phoenix=None),
 ]
 
 # Tier-3 catalog: (category, product, cowos, euv, upc, capital-range, labor-range)
@@ -296,14 +357,14 @@ TIER3_CATALOG = [
 
 # Plausible Tier-2 customers for each Tier-3 category
 PARENT_POOL = {
-    "Raw Quartz & Crucibles": ["Topco Scientific", "Foxsemicon (FITI)", "Tokyo Electron"],
-    "Specialty Resins & Encapsulants": ["ASE Group", "Siliconware Precision (SPIL)", "Unimicron", "Kinsus Interconnect"],
-    "Precision CNC Machining": ["Foxsemicon (FITI)", "Applied Materials", "Tokyo Electron", "ASML"],
-    "UHP Valves & Fittings": ["Marketech International", "Foxsemicon (FITI)", "Applied Materials"],
-    "Technical Ceramics": ["Applied Materials", "Tokyo Electron", "Foxsemicon (FITI)"],
-    "FFKM Seals & O-Rings": ["Applied Materials", "Tokyo Electron", "Marketech International"],
-    "Photoresist Precursors": ["Chang Chun Group", "Entegris", "Sunlit Chemical"],
-    "CMP Slurry & Abrasives": ["Entegris", "Chang Chun Group", "LCY Chemical"],
+    "Raw Quartz & Crucibles": ["Topco Scientific", "Foxsemicon (FITI)", "Tokyo Electron", "Shin-Etsu Chemical", "SUMCO"],
+    "Specialty Resins & Encapsulants": ["ASE Group", "Siliconware Precision (SPIL)", "Unimicron", "Kinsus Interconnect", "Ibiden", "Shinko Electric"],
+    "Precision CNC Machining": ["Foxsemicon (FITI)", "Applied Materials", "Tokyo Electron", "ASML", "Lam Research", "Disco Corporation", "Advantest"],
+    "UHP Valves & Fittings": ["Marketech International", "Foxsemicon (FITI)", "Applied Materials", "Lam Research"],
+    "Technical Ceramics": ["Applied Materials", "Tokyo Electron", "Foxsemicon (FITI)", "Disco Corporation", "Lam Research"],
+    "FFKM Seals & O-Rings": ["Applied Materials", "Tokyo Electron", "Marketech International", "Lam Research"],
+    "Photoresist Precursors": ["Chang Chun Group", "Entegris", "Sunlit Chemical", "Tokyo Ohka Kogyo (TOK)", "JSR Corporation", "Shin-Etsu Chemical"],
+    "CMP Slurry & Abrasives": ["Entegris", "Chang Chun Group", "LCY Chemical", "JSR Corporation"],
     "UHP Filtration Media": ["Entegris", "Sunlit Chemical", "LCY Chemical"],
     "EUV Pod Components": ["Gudeng Precision"],
     "Wafer Carrier Molding": ["Gudeng Precision", "Entegris"],
@@ -313,6 +374,24 @@ PARENT_POOL = {
     "Precision Optics Polishing": ["ASML", "Gudeng Precision"],
     "Chemical Logistics": ["Sunlit Chemical", "LCY Chemical", "Chang Chun Group"],
 }
+
+# AI-accelerator critical-path categories — what actually gates GPU/TPU output:
+# advanced packaging (CoWoS), HBM, advanced logic (EUV), advanced substrates,
+# leading-edge wafers/photoresist, and the Tier-3 inputs feeding them.
+AI_SUPPLY_CATEGORIES = {
+    "Foundry (Anchor)", "OSAT / Advanced Packaging", "ABF Substrates", "IC Substrates",
+    "Lithography Systems", "EUV Infrastructure", "HBM Memory", "Silicon Wafers",
+    "Photoresist", "Test Systems", "Deposition / Etch Tools", "Coat / Develop / Etch Tools",
+    "Wafer Dicing & Grinding", "Specialty Resins & Encapsulants", "CMP Slurry & Abrasives",
+    "Technical Ceramics", "Photoresist Precursors", "EUV Pod Components",
+    "Precision Optics Polishing", "Wafer Carrier Molding",
+}
+
+
+def is_ai_supply(category: str, cowos: bool, euv: bool, tier: int) -> bool:
+    """A company is on the AI-accelerator path if it touches CoWoS/EUV, is the
+    foundry anchor, or sits in an AI-critical category (HBM, substrates, etc.)."""
+    return bool(tier == 1 or cowos or euv or category in AI_SUPPLY_CATEGORIES)
 
 # Geographic clusters for Tier-3 generation: (label, lat, lon, weight)
 TIER3_CLUSTERS = [
@@ -340,7 +419,7 @@ CATEGORY_WORD = {
     "Precision Optics Polishing": "Optics", "Chemical Logistics": "Logistics",
 }
 
-N_TIER3 = 38  # 1 (TSMC) + 16 (Tier 2) + 38 (Tier 3) = 55 companies
+N_TIER3 = 38  # 1 (TSMC) + 28 (Tier 2) + 38 (Tier 3) = 67 companies
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -362,6 +441,7 @@ def generate_dataset(seed: int = 42) -> pd.DataFrame:
         revenue_musd=88000, employees=77000,
         tsmc_dependence_pct=100, us_presence=True,
         phoenix_lat=FAB21[0], phoenix_lon=FAB21[1],
+        ai_supply_chain=True,
     ))
 
     # ── Tier 2 (real players, mock metrics) ──
@@ -380,6 +460,7 @@ def generate_dataset(seed: int = 42) -> pd.DataFrame:
             revenue_musd=t2["revenue"], employees=t2["employees"],
             tsmc_dependence_pct=t2["tsmc_dep"], us_presence=t2["us_presence"],
             phoenix_lat=px, phoenix_lon=py,
+            ai_supply_chain=is_ai_supply(t2["category"], t2["cowos"], t2["euv"], 2),
         ))
 
     # ── Tier 3 (generated sub-suppliers) ──
@@ -420,6 +501,7 @@ def generate_dataset(seed: int = 42) -> pd.DataFrame:
             tsmc_dependence_pct=int(rng.uniform(30, 95)),
             us_presence=rng.random() < 0.12,
             phoenix_lat=np.nan, phoenix_lon=np.nan,
+            ai_supply_chain=is_ai_supply(cat, bool(cowos), bool(euv), 3),
         ))
 
     return pd.DataFrame(rows)
@@ -827,6 +909,13 @@ with st.sidebar:
     show_arcs = st.toggle("Show logistics arcs", value=True)
     st.divider()
     st.markdown("### 🔍 TARGET FILTERS")
+    ai_only = st.toggle(
+        "🤖 AI supply chain only",
+        value=False,
+        help="Show only the AI-accelerator critical path: CoWoS advanced packaging, "
+             "HBM memory, EUV / advanced logic, advanced substrates, leading-edge "
+             "wafers & photoresist, and their Tier-3 inputs.",
+    )
     tiers = st.multiselect("Tier", [1, 2, 3], default=[1, 2, 3])
     cats = st.multiselect("Category", sorted(df["category"].unique()), default=[])
     countries = st.multiselect("Country", sorted(df["country"].unique()), default=[])
@@ -835,6 +924,8 @@ with st.sidebar:
 
 # ── Apply filters (TSMC anchor always retained for map context) ──
 mask = df["tier"].isin(tiers) & (df["migration_score"] >= min_score)
+if ai_only:
+    mask &= df["ai_supply_chain"]
 if cats:
     mask &= df["category"].isin(cats)
 if countries:
@@ -847,14 +938,17 @@ df_f = df[mask]
 df_map = pd.concat([df_f, df[df["tier"] == 1]]).drop_duplicates("company_id")
 
 # ── KPI strip ──
-k1, k2, k3, k4, k5 = st.columns(5)
-k1.metric("Companies tracked", len(df))
-k2.metric("Prime targets (≥70, TW)",
+scope = "🤖 AI supply chain" if ai_only else "full supply chain"
+k1, k2, k3, k4, k5, k6 = st.columns(6)
+k1.metric("Companies tracked", f"{len(df_f)} / {len(df)}", help=f"Matching filter ({scope})")
+k2.metric("AI supply-chain nodes", int(df["ai_supply_chain"].sum()),
+          help="Companies on the AI-accelerator critical path")
+k3.metric("Prime targets (≥70, TW)",
           int(((df["migration_score"] >= 70) & (df["country"] == "Taiwan") & (df["tier"] > 1)).sum()))
-k3.metric("Announced AZ sites", int((df["phoenix_lat"].notna() & (df["tier"] > 1)).sum()))
-k4.metric("CoWoS / EUV / UPC nodes",
+k4.metric("Announced AZ sites", int((df["phoenix_lat"].notna() & (df["tier"] > 1)).sum()))
+k5.metric("CoWoS / EUV / UPC nodes",
           int((df["cowos"] | df["euv"] | df["upc"]).sum()))
-k5.metric("Avg migration score", f"{df[df['tier'] > 1]['migration_score'].mean():.0f}/100")
+k6.metric("Avg migration score", f"{df[df['tier'] > 1]['migration_score'].mean():.0f}/100")
 
 st.divider()
 
@@ -934,7 +1028,7 @@ st.caption(f"{len(df_f)} of {len(df)} companies match current filters. "
            "Click any column header to sort.")
 
 EXPORT_COLS = ["company_id", "name", "tier", "category", "product", "city", "country",
-               "lat", "lon", "supplies_to", "cowos", "euv", "upc",
+               "lat", "lon", "supplies_to", "ai_supply_chain", "cowos", "euv", "upc",
                "capital_intensity", "labor_intensity", "revenue_musd", "employees",
                "tsmc_dependence_pct", "us_presence", "migration_score", "status"]
 df_view = df_f[EXPORT_COLS].sort_values("migration_score", ascending=False)
@@ -947,6 +1041,7 @@ st.dataframe(
     column_config={
         "migration_score": st.column_config.ProgressColumn(
             "US Migration Likelihood", min_value=0, max_value=100, format="%d"),
+        "ai_supply_chain": st.column_config.CheckboxColumn("AI chain"),
         "revenue_musd": st.column_config.NumberColumn("Revenue (M USD)", format="$%d M"),
         "tsmc_dependence_pct": st.column_config.NumberColumn("TSMC dep. %", format="%d%%"),
     },
