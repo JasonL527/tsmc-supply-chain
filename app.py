@@ -38,6 +38,8 @@ import streamlit as st
 from folium.plugins import AntPath
 from streamlit_folium import st_folium
 
+import osint  # live OSINT API clients (Google Places, ImportYeti, OpenCorporates)
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 0. PAGE CONFIG + COMMAND-CENTER AESTHETIC
 # ──────────────────────────────────────────────────────────────────────────────
@@ -75,105 +77,27 @@ st.markdown(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 1. OSINT API STUBS  (wire real harvesters here)
+# 1. OSINT API CLIENTS  — see osint.py for the live Google Places / ImportYeti /
+#    OpenCorporates clients. They hit the real endpoints when a key is set in
+#    st.secrets and return labelled mock data otherwise. The interactive UI for
+#    them lives in the "OSINT HARVESTING PIPELINE" expander near the bottom.
 # ──────────────────────────────────────────────────────────────────────────────
-def fetch_importyeti_bol(company_name: str, dest_state: str = "AZ") -> dict:
-    """
-    [OSINT STUB] ImportYeti — U.S. Customs Bill of Lading harvesting.
-
-    PURPOSE: Detect which Taiwanese suppliers are ALREADY shipping ocean
-    freight to Arizona consignees (leading indicator of physical migration).
-
-    ── INTEGRATION POINT ────────────────────────────────────────────────────
-    # import requests
-    # resp = requests.get(
-    #     "https://api.importyeti.com/v1/company/search",
-    #     params={"q": company_name, "consignee_state": dest_state},
-    #     headers={"Authorization": f"Bearer {st.secrets['IMPORTYETI_API_KEY']}"},
-    #     timeout=30,
-    # )
-    # return resp.json()
-    # Map: shipment_count, consignee names, HS codes, TEU volume → feed the
-    # `tsmc_dependence_pct` and `us_presence` fields of the dataset, and add
-    # a +N bonus to the migration score for confirmed AZ-bound BoLs.
-    ─────────────────────────────────────────────────────────────────────────
-    """
-    return {
-        "source": "importyeti.com (STUB)",
-        "query": company_name,
-        "dest_state": dest_state,
-        "shipments_last_12mo": 17,
-        "top_consignee": "TSMC ARIZONA CORP",
-        "top_hs_code": "8486.90 — parts of semiconductor mfg machines",
-        "signal": "ACTIVE AZ-BOUND FREIGHT DETECTED",
-    }
+@st.cache_data(show_spinner="Geocoding via Google Places…")
+def geocode_cached(name: str, country: str) -> dict:
+    """Cache geocode results — Places is billed per request."""
+    return osint.geocode_company(name, country)
 
 
-def fetch_opencorporates_profile(company_name: str, jurisdiction: str = "tw") -> dict:
-    """
-    [OSINT STUB] OpenCorporates — private company registry intelligence.
-
-    PURPOSE: Pull incorporation records, officers, and — critically — detect
-    newly registered Arizona/Delaware subsidiaries of Taiwanese suppliers
-    (e.g. "Gudeng USA LLC" filings are a hard migration signal).
-
-    ── INTEGRATION POINT ────────────────────────────────────────────────────
-    # import requests
-    # resp = requests.get(
-    #     f"https://api.opencorporates.com/v0.4/companies/search",
-    #     params={
-    #         "q": company_name,
-    #         "jurisdiction_code": jurisdiction,   # also probe "us_az", "us_de"
-    #         "api_token": st.secrets["OPENCORPORATES_API_KEY"],
-    #     },
-    #     timeout=30,
-    # )
-    # return resp.json()
-    # Map: registered AZ entities → flip `us_presence=True`, attach officers
-    # for outreach targeting, capture incorporation_date for timeline intel.
-    ─────────────────────────────────────────────────────────────────────────
-    """
-    return {
-        "source": "opencorporates.com (STUB)",
-        "query": company_name,
-        "jurisdiction": jurisdiction,
-        "matches": [
-            {"name": f"{company_name} Co., Ltd.", "jurisdiction": "tw", "status": "Active"},
-            {"name": f"{company_name} USA LLC", "jurisdiction": "us_az", "status": "Active",
-             "incorporation_date": "2025-09-12"},
-        ],
-        "signal": "US_AZ SUBSIDIARY FILING DETECTED",
-    }
-
-
-def geocode_google_places(address: str) -> dict:
-    """
-    [OSINT STUB] Google Places / Geocoding — supplier address resolution.
-
-    PURPOSE: Convert registry addresses (Chinese + English) to lat/lon so new
-    suppliers auto-appear on the Hsinchu / Phoenix micro-views; also harvest
-    place metadata (phone, website) for the outreach CRM.
-
-    ── INTEGRATION POINT ────────────────────────────────────────────────────
-    # import requests
-    # resp = requests.get(
-    #     "https://maps.googleapis.com/maps/api/geocode/json",
-    #     params={"address": address, "key": st.secrets["GOOGLE_MAPS_API_KEY"]},
-    #     timeout=30,
-    # )
-    # loc = resp.json()["results"][0]["geometry"]["location"]
-    # return {"lat": loc["lat"], "lon": loc["lng"]}
-    # Map: write back into df["lat"], df["lon"]; cache aggressively (geocoding
-    # is billed per-request).
-    ─────────────────────────────────────────────────────────────────────────
-    """
-    return {
-        "source": "maps.googleapis.com (STUB)",
-        "query": address,
-        "lat": 24.7805,
-        "lon": 121.0102,
-        "formatted_address": "Hsinchu Science Park, Hsinchu, Taiwan (MOCK)",
-    }
+def apply_geo_overrides(df: pd.DataFrame, overrides: dict) -> pd.DataFrame:
+    """Apply session geocode overrides {company_id: (lat, lon, addr)} onto df."""
+    if not overrides:
+        return df
+    df = df.copy()
+    for cid, (lat, lon, _addr) in overrides.items():
+        m = df["company_id"] == cid
+        if m.any() and lat is not None and lon is not None:
+            df.loc[m, ["lat", "lon", "geo_precision"]] = [lat, lon, "geocoded"]
+    return df
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1173,6 +1097,7 @@ def build_tree_figure(df: pd.DataFrame) -> go.Figure:
 df_raw = build_unified_dataset()
 df, betweenness = build_graph_and_scores(df_raw)
 G = build_graph(df_raw)
+df = apply_geo_overrides(df, st.session_state.get("geo_overrides", {}))
 
 st.markdown(
     "<div class='sauron-title'>👁️ PROJECT SAURON</div>"
@@ -1429,31 +1354,69 @@ with st.expander("📚 DATA SOURCES & ATTRIBUTION — what's real vs. illustrati
         """
     )
 
-# ── OSINT pipeline stubs panel ──
-with st.expander("🔌 OSINT HARVESTING PIPELINE — live API integration points (stubs)"):
-    o1, o2, o3 = st.columns(3)
+# ── OSINT harvesting pipeline — LIVE API clients (key-gated) ──
+_status = osint.api_status()
+_badge = lambda ok: "🟢 LIVE" if ok else "⚪ mock (no key)"
+with st.expander("🔌 OSINT HARVESTING PIPELINE — live Google Places · ImportYeti · OpenCorporates"):
+    st.caption(
+        f"Status — 📍 Google Places: **{_badge(_status['google_places'])}**  ·  "
+        f"🚢 ImportYeti/BoL: **{_badge(_status['importyeti'])}**  ·  "
+        f"🏛️ OpenCorporates: **{_badge(_status['opencorporates'])}**. "
+        "Add keys in `.streamlit/secrets.toml` (see `secrets.toml.example`) to go live; "
+        "without a key each tool returns clearly-labelled mock data."
+    )
+    o1, o2, o3 = st.tabs(["📍 Geocode (Places)", "🚢 ImportYeti / BoL", "🏛️ OpenCorporates"])
+
+    # ---- Google Places: geocode a country-approx company onto precise coords ----
     with o1:
-        st.markdown("**🚢 ImportYeti — BoL / Customs**")
-        st.caption("Who is already shipping ocean freight to Arizona consignees? "
-                   "Hard physical-migration signal.")
-        if st.button("Run stub query", key="stub_iy"):
-            st.json(fetch_importyeti_bol("Gudeng Precision"))
+        st.markdown("**Resolve a country-approx company to a precise location** — "
+                    "the result is written back onto the map for this session.")
+        approx = df[df["geo_precision"].isin(["country-approx", "ungeocoded"])]
+        if len(approx):
+            pick = st.selectbox("Company to geocode", approx["name"].tolist(), key="geo_pick")
+            row = approx[approx["name"] == pick].iloc[0]
+            if st.button("📍 Geocode via Google Places", key="geo_run"):
+                res = geocode_cached(str(row["name"]), str(row["country"]))
+                if res.get("lat") is not None and res.get("live"):
+                    st.session_state.setdefault("geo_overrides", {})[row["company_id"]] = (
+                        res["lat"], res["lon"], res.get("formatted_address", ""))
+                    st.success(f"Pinned **{pick}** → {res.get('formatted_address','')} "
+                               f"({res['lat']:.4f}, {res['lon']:.4f}). Map updated below ↑")
+                    st.rerun()
+                elif not res.get("configured"):
+                    st.warning(res.get("hint", "No API key configured."))
+                    st.json(res)
+                else:
+                    st.error(f"Geocode failed: {res.get('error', res)}")
+        else:
+            st.info("All companies already have precise coordinates.")
+        if st.session_state.get("geo_overrides"):
+            st.caption(f"✅ {len(st.session_state['geo_overrides'])} companies geocoded this session.")
+
+    # ---- ImportYeti: who is shipping ocean freight to Arizona ----
     with o2:
-        st.markdown("**🏛️ OpenCorporates — registries**")
-        st.caption("Detect new AZ/DE subsidiary filings of Taiwanese suppliers "
-                   "(e.g. '<Name> USA LLC').")
-        if st.button("Run stub query", key="stub_oc"):
-            st.json(fetch_opencorporates_profile("Sunlit Chemical"))
+        st.markdown("**Bill-of-Lading lookup** — is this supplier already shipping to Arizona?")
+        iy_name = st.text_input("Supplier name", value="Gudeng Precision", key="iy_name")
+        iy_state = st.text_input("Consignee state", value="AZ", key="iy_state")
+        if st.button("🚢 Query customs data", key="iy_run"):
+            st.json(osint.importyeti_shipments(iy_name, iy_state))
+
+    # ---- OpenCorporates: new AZ/DE subsidiary filings ----
     with o3:
-        st.markdown("**📍 Google Places — geocoding**")
-        st.caption("Resolve registry addresses (zh + en) to lat/lon for the "
-                   "Hsinchu / Phoenix micro-views.")
-        if st.button("Run stub query", key="stub_gp"):
-            st.json(geocode_google_places("新竹科學園區, Hsinchu, Taiwan"))
+        st.markdown("**Registry search** — detect a new `us_az` / `us_de` subsidiary "
+                    "(a hard migration signal).")
+        oc_name = st.text_input("Company name", value="Sunlit Chemical", key="oc_name")
+        oc_juris = st.text_input("Jurisdiction filter (optional, e.g. us_az)", value="", key="oc_juris")
+        if st.button("🏛️ Search registries", key="oc_run"):
+            res = osint.opencorporates_search(oc_name, oc_juris)
+            if res.get("us_subsidiary_signal"):
+                st.error("🟥 US (AZ/DE) subsidiary filing detected — migration signal.")
+            st.json(res)
 
 st.markdown(
     "<br><div style='color:#3a4358;font-family:monospace;font-size:11px'>"
-    "PROJECT SAURON v0.2 · curated + ETO (real shares) + TSIA · deduped · "
+    "PROJECT SAURON v0.3 · curated + ETO (real shares) + TSIA · deduped · "
+    "live OSINT: Google Places · ImportYeti · OpenCorporates (key-gated) · "
     "one dashboard to find them, one dashboard to bring them all (to Phoenix)</div>",
     unsafe_allow_html=True,
 )
