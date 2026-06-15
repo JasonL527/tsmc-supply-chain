@@ -77,6 +77,50 @@ st.markdown(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 0b. SIMPLE LOGIN GATE
+# ──────────────────────────────────────────────────────────────────────────────
+# Credentials live in st.secrets under a [passwords] table (username = password).
+# If no [passwords] table is configured the gate is DISABLED (open access) so the
+# app keeps working before you set it up — add the secret to switch it on.
+def check_password() -> bool:
+    import hmac
+
+    try:
+        users = dict(st.secrets.get("passwords", {}))
+    except Exception:
+        users = {}
+    if not users:                      # no credentials configured → open access
+        return True
+    if st.session_state.get("auth_ok"):
+        return True
+
+    def _verify():
+        u = st.session_state.get("login_user", "")
+        p = st.session_state.get("login_pass", "")
+        ok = u in users and hmac.compare_digest(str(p), str(users[u]))
+        st.session_state["auth_ok"] = ok
+        st.session_state["auth_failed"] = not ok
+        if ok:
+            st.session_state.pop("login_pass", None)   # don't retain the password
+
+    st.markdown(
+        "<div class='sauron-title'>👁️ PROJECT SAURON</div>"
+        "<div class='sauron-sub'>RESTRICTED · SIGN IN TO CONTINUE</div><br>",
+        unsafe_allow_html=True,
+    )
+    with st.form("login"):
+        st.text_input("Username", key="login_user")
+        st.text_input("Password", type="password", key="login_pass")
+        st.form_submit_button("Sign in", on_click=_verify, type="primary")
+    if st.session_state.get("auth_failed"):
+        st.error("Incorrect username or password.")
+    return False
+
+
+if not check_password():
+    st.stop()
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 1. OSINT API CLIENTS  — see osint.py for the live Google Places / ImportYeti /
 #    OpenCorporates clients. They hit the real endpoints when a key is set in
 #    st.secrets and return labelled mock data otherwise. The interactive UI for
