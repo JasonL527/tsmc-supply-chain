@@ -1,0 +1,27 @@
+id,name,type,category,side,organization,role,outreach,status,notes
+chips-po,CHIPS Program Office,Org,CHIPS Act / US Federal,US,U.S. Dept of Commerce,Administers CHIPS incentives & the TSMC Arizona award,nist.gov/chips,public-role,Primary federal body for CHIPS funding
+mschmidt,Michael Schmidt,Person,CHIPS Act / US Federal,US,U.S. Dept of Commerce,Former Director · CHIPS Program Office (verify current role),Public / LinkedIn,verify,User-named — confirm current title before outreach
+doc,U.S. Department of Commerce,Org,CHIPS Act / US Federal,US,Federal,Oversees CHIPS & SelectUSA,commerce.gov,public-role,Parent dept
+sec-commerce,U.S. Secretary of Commerce,Role,CHIPS Act / US Federal,US,U.S. Dept of Commerce,Cabinet lead (verify current officeholder),commerce.gov,verify,Officeholder changes by administration
+selectusa,SelectUSA,Program,Investment Promotion (SelectUSA),US,U.S. Dept of Commerce,Federal FDI promotion — connects investors to US sites,selectusa.gov,public-role,Key entry point for foreign investors
+selectusa-summit,SelectUSA Investment Summit,Program,Investment Promotion (SelectUSA),US,U.S. Dept of Commerce,Annual FDI matchmaking event,selectusa.gov,public-role,Networking venue
+ait,American Institute in Taiwan (AIT),Org,American Institute in Taiwan,US,U.S. State Dept (de facto),De facto US mission in Taiwan,ait.org.tw,public-role,Commercial section relevant to US-bound investment
+ait-commercial,AIT Commercial Section,Org,American Institute in Taiwan,US,AIT,Trade & investment facilitation,ait.org.tw,public-role,Liaison for outbound investment to US
+aca,Arizona Commerce Authority (ACA),Org,Arizona State & Local,US,State of Arizona,State incentives & site selection,azcommerce.com,public-role,State-level incentives
+gpec,Greater Phoenix Economic Council (GPEC),Org,Arizona State & Local,US,Greater Phoenix,Regional economic development & attraction,gpec.org,public-role,Regional FDI org
+phx-econ,City of Phoenix — Economic Development,Org,Arizona State & Local,US,City of Phoenix,Local permitting & incentives,phoenix.gov,public-role,Local level
+az-gov,Arizona Governor's Office,Role,Arizona State & Local,US,State of Arizona,State executive (verify current),azgovernor.gov,verify,Officeholder changes
+marketech,Marketech International,Org,TW Build & Move Execution,Taiwan,Marketech,Cleanroom build-out & facility integration,micb2b.com,public-role,Also a node in the supply-chain dataset
+ctci,CTCI Corporation,Org,TW Build & Move Execution,Taiwan,CTCI,EPC / engineering contractor (verify scope),ctci.com,public-role,Reported AZ involvement — verify
+uis,United Integrated Services (UIS),Org,TW Build & Move Execution,Taiwan,UIS,Turnkey cleanroom / facility (verify scope),uisco.com,public-role,Verify role in AZ build
+okland,Okland Construction,Org,TW Build & Move Execution,US,Okland,U.S. general contractor (verify scope),okland.com,public-role,US contractor associated with AZ build — verify
+acedragon,Ace Dragon Group,Org,TW Build & Move Execution,Taiwan,Ace Dragon,Construction / services (verify entity & role),Public / LinkedIn,verify,Confirm entity and AZ role
+propersys,Propersys Corporation,Org,TW Build & Move Execution,Taiwan,Propersys,Systems / facility (verify scope),Public / LinkedIn,verify,Verify role
+mmi,MMI Industrial & Steel,Org,TW Build & Move Execution,Taiwan,MMI,Structural steel / industrial (verify scope),Public / LinkedIn,verify,Verify role
+exec-leads,Project execution leads (per company),Role,TW Build & Move Execution,Taiwan,Various,Site / project directors who ran the AZ move,Research via LinkedIn / press releases,research-needed,DO NOT fabricate — identify via public professional sources
+asianometry,Asianometry (YouTube),Org,Media & Analysts,Media,Independent,Semiconductor history & analysis,youtube.com/@Asianometry,public-role,Creator keeps identity private — engage via the channel
+techintaiwan,TechInTaiwan (Substack),Org,Media & Analysts,Media,Independent,Taiwan tech newsletter & podcast,Substack,public-role,Networking / learning
+lrchen,Liang-Rong Chen,Person,Media & Analysts,Media,CommonWealth Magazine,Senior tech journalist (verify outlet/role),Public / Substack,verify,User-named — confirm current outlet
+commonwealth,CommonWealth Magazine (天下),Org,Media & Analysts,Media,CommonWealth,Taiwan business & tech journalism,cw.com.tw,public-role,You hold a subscription
+digitimes,DigiTimes,Org,Media & Analysts,Media,DigiTimes,Taiwan semiconductor trade press,digitimes.com,public-role,Supply-chain reporting
+timculpan,Tim Culpan,Person,Media & Analysts,Media,Position to Win (Substack),Semiconductor columnist (ex-Bloomberg),Public / Substack,public-role,Public commentator

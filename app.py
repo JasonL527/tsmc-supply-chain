@@ -1058,6 +1058,90 @@ def build_phoenix_map(df: pd.DataFrame, show_arcs: bool) -> folium.Map:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 5b. STAKEHOLDER CONSTELLATION — who-helped-the-move relationship map
+# ──────────────────────────────────────────────────────────────────────────────
+# Public, professional-capacity info only. No private contact details. Named
+# individuals are limited to public figures; private-company execution staff are
+# left as "research via LinkedIn / press" placeholders, never fabricated.
+SIDE_COLOR = {"US": "#4361ee", "Taiwan": "#ff6b35", "Media": "#9b5de5"}
+TYPE_SYMBOL = {"Person": "circle", "Org": "square", "Program": "diamond",
+               "Role": "diamond-open"}
+
+
+@st.cache_data(show_spinner=False)
+def load_stakeholders() -> pd.DataFrame:
+    f = DATA_DIR / "stakeholders.csv"
+    return pd.read_csv(f) if f.exists() else pd.DataFrame()
+
+
+def build_constellation_figure(df_s: pd.DataFrame) -> go.Figure:
+    """Radial constellation: center → category hubs → member nodes."""
+    cats = list(dict.fromkeys(df_s["category"]))
+    pos, hub_pos = {}, {}
+    edge_x, edge_y = [], []
+    center = (0.0, 0.0)
+    R1 = 1.0
+    for i, cat in enumerate(cats):
+        th = 2 * math.pi * i / max(len(cats), 1) - math.pi / 2
+        hub = (R1 * math.cos(th), R1 * math.sin(th))
+        hub_pos[cat] = hub
+        edge_x += [center[0], hub[0], None]
+        edge_y += [center[1], hub[1], None]
+        members = df_s[df_s["category"] == cat]
+        k = len(members)
+        rr = 0.34 + 0.03 * k
+        for j, (_, m) in enumerate(members.iterrows()):
+            phi = 2 * math.pi * j / max(k, 1) + th
+            p = (hub[0] + rr * math.cos(phi), hub[1] + rr * math.sin(phi))
+            pos[m["id"]] = p
+            edge_x += [hub[0], p[0], None]
+            edge_y += [hub[1], p[1], None]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=edge_x, y=edge_y, mode="lines", hoverinfo="skip",
+                             line=dict(color="#2a3550", width=1), showlegend=False))
+    # category hubs
+    fig.add_trace(go.Scatter(
+        x=[hub_pos[c][0] for c in cats], y=[hub_pos[c][1] for c in cats],
+        mode="markers+text", text=cats, textposition="middle center",
+        textfont=dict(size=9, color="#e8e9f3"),
+        marker=dict(size=46, color="#0b101d", line=dict(color="#ff9f1c", width=1.5)),
+        hoverinfo="skip", showlegend=False))
+    # center
+    fig.add_trace(go.Scatter(
+        x=[0], y=[0], mode="markers+text", text=["TSMC AZ<br>MOVE"],
+        textposition="middle center", textfont=dict(size=10, color="#05070d"),
+        marker=dict(size=58, color="#ff3b3b", line=dict(color="#ffd166", width=2)),
+        hoverinfo="skip", showlegend=False))
+    # member nodes, one trace per side (for the legend)
+    for side, color in SIDE_COLOR.items():
+        sub = df_s[df_s["side"] == side]
+        if not len(sub):
+            continue
+        fig.add_trace(go.Scatter(
+            x=[pos[i][0] for i in sub["id"]], y=[pos[i][1] for i in sub["id"]],
+            mode="markers+text", name=side, text=sub["name"],
+            textposition="top center", textfont=dict(size=8, color="#8d99ae"),
+            marker=dict(size=15, color=color,
+                        symbol=[TYPE_SYMBOL.get(t, "circle") for t in sub["type"]],
+                        line=dict(color="#0b101d", width=1)),
+            customdata=np.stack([sub["role"], sub["organization"], sub["outreach"],
+                                 sub["status"], sub["notes"]], axis=-1),
+            hovertemplate=("<b>%{text}</b><br>%{customdata[0]}<br>"
+                           "Org: %{customdata[1]}<br>Outreach: %{customdata[2]}<br>"
+                           "Status: %{customdata[3]}<br><i>%{customdata[4]}</i><extra></extra>"),
+        ))
+    fig.update_layout(
+        template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        height=680, margin=dict(l=10, r=10, t=30, b=10),
+        xaxis=dict(visible=False, range=[-1.7, 1.7]),
+        yaxis=dict(visible=False, range=[-1.7, 1.7], scaleanchor="x"),
+        legend=dict(orientation="h", y=1.04, font=dict(color="#8d99ae")),
+    )
+    return fig
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 6. NETWORK TREE FIGURE (Plotly, hierarchical 3-tier layout)
 # ──────────────────────────────────────────────────────────────────────────────
 def build_tree_figure(df: pd.DataFrame) -> go.Figure:
@@ -1234,8 +1318,9 @@ k6.metric("Announced AZ sites", int((df["phoenix_lat"].notna() & (df["tier"] > 1
 st.divider()
 
 # ── Tabs ──
-tab_map, tab_tree, tab_engine = st.tabs(
-    ["🗺️ GEOSPATIAL INTEL", "🕸️ DEEP TREE NETWORK", "🎯 SCORING ENGINE"]
+tab_map, tab_tree, tab_engine, tab_people = st.tabs(
+    ["🗺️ GEOSPATIAL INTEL", "🕸️ DEEP TREE NETWORK", "🎯 SCORING ENGINE",
+     "🌐 STAKEHOLDER CONSTELLATION"]
 )
 
 with tab_map:
@@ -1300,6 +1385,78 @@ with tab_engine:
                           xaxis=dict(range=[0, 108], title="Migration score"),
                           title="TOP 15 MIGRATION TARGETS")
         st.plotly_chart(fig, width="stretch")
+
+with tab_people:
+    df_s = load_stakeholders()
+    if not len(df_s):
+        st.info("No stakeholder data found (data/stakeholders.csv).")
+    else:
+        st.caption("WHO MADE THE MOVE POSSIBLE · a relationship map of the people & "
+                   "organizations behind TSMC's Taiwan→Arizona shift — for outreach, "
+                   "learning, and finding your own way in.")
+        st.warning(
+            "⚠️ **Public, professional info only — verify before outreach.** Named "
+            "individuals are limited to public figures in public roles; private-company "
+            "execution staff are shown as **research-via-LinkedIn placeholders, not "
+            "invented names**. No private contact details are stored. Roles marked "
+            "*verify* may be out of date. Outreach only through the public channels shown.",
+            icon=None,
+        )
+        sides = st.multiselect("Side", ["US", "Taiwan", "Media"],
+                               default=["US", "Taiwan", "Media"], key="con_side")
+        cats_all = list(dict.fromkeys(df_s["category"]))
+        cats_sel = st.multiselect("Category", cats_all, default=cats_all, key="con_cat")
+        d = df_s[df_s["side"].isin(sides) & df_s["category"].isin(cats_sel)]
+
+        p1, p2, p3, p4 = st.columns(4)
+        p1.metric("People & orgs mapped", len(df_s))
+        p2.metric("Public figures / orgs", int((df_s["status"] == "public-role").sum()))
+        p3.metric("Need verification", int(df_s["status"].isin(["verify", "research-needed"]).sum()))
+        p4.metric("Categories", df_s["category"].nunique())
+
+        if len(d) > 1:
+            st.plotly_chart(build_constellation_figure(d), width="stretch")
+        else:
+            st.info("Select at least one side/category to render the constellation.")
+
+        st.markdown("#### 📇 Contact ledger")
+        st.dataframe(
+            d[["name", "type", "category", "side", "organization", "role", "outreach", "status", "notes"]],
+            width="stretch", height=320, hide_index=True,
+            column_config={"outreach": st.column_config.TextColumn("Outreach (public)"),
+                           "status": st.column_config.TextColumn("Status")},
+        )
+        st.download_button(
+            "📤 Export stakeholders (CSV)",
+            data=d.to_csv(index=False).encode("utf-8-sig"),
+            file_name=f"sauron_stakeholders_{date.today().isoformat()}.csv",
+            mime="text/csv",
+        )
+
+        with st.expander("🧭 How to actually get involved — concrete, legitimate entry points"):
+            st.markdown(
+                """
+You said you want in but aren't sure how. The fastest *legitimate* on-ramps, roughly in order:
+
+- **SelectUSA (selectusa.gov)** — the U.S. government's own FDI program. It exists to connect
+  people to US locations & incentives. The annual **SelectUSA Investment Summit** is the single
+  densest room of the people on this map.
+- **Arizona Commerce Authority (azcommerce.com)** & **GPEC (gpec.org)** — state/regional teams
+  whose literal job is helping the TSMC ecosystem land in Phoenix. They take meetings.
+- **AIT Commercial Section (ait.org.tw)** — the US commercial liaison *in Taiwan*; the bridge
+  for Taiwanese suppliers heading to the US.
+- **SEMI (semi.org)** — the industry association (already a node in your TSIA data). Join, go to
+  SEMICON West / SEMICON Taiwan, work the supplier-migration track.
+- **Learn first, fast** — the Media & Analysts cluster (Asianometry, TechInTaiwan, DigiTimes,
+  CommonWealth) is your low-stakes way to build context before you spend relationship capital.
+  A few well-prepared "grab a coffee, I'm trying to understand X" notes go a long way.
+
+**Where *you* could plug in:** supplier site-selection & relocation advisory, cleanroom/facility
+build-out coordination, TW↔AZ talent & logistics bridging, or simply being the person who maps
+this ecosystem (which is what this dashboard already makes you). Pick one node, learn it deeply,
+and become useful to it.
+                """
+            )
 
 st.divider()
 
